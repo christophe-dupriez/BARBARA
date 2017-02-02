@@ -1,0 +1,1195 @@
+Python 2.7.9 (default, Mar  8 2015, 00:52:26) 
+[GCC 4.9.2] on linux2
+Type "copyright", "credits" or "license()" for more information.
+>>> ================================ RESTART ================================
+>>> 
+[u'akuino6003.ini', u'system', u'PCB', u'ELA', u'bluetooth', u'wifi', u'owfs', u'OLED', u'battery', u'shutdown', u'running', u'keypad']
+Battery voltage divider=10.0
+/run/akuino/
+/run/akuino/
+BLINE 3 mm,0 mm
+SIZE 24 mm,100 mm
+DIRECTION 0
+BLINEDETECT
+
+---
+DISPLAY OFF
+BLINE 3 mm,0 mm
+SIZE 24 mm,100 mm
+DIRECTION 0
+CLS
+TEXT 180,200,"2",90,1,1,"%(name)s"
+BARCODE 145,200,"EAN13",100,1,90,4,4,"%(barcode)s"
+PRINT 1,1
+CLS
+EOJ
+
+---
+http://0.0.0.0:8890/
+ Screen : 1920x1152
+Traceback (most recent call last):
+  File "/akuinoshare/BARBARA/program/barbara.py", line 2364, in InputListThread
+    threadContext = insureContext(key)
+  File "/akuinoshare/BARBARA/program/barbara.py", line 2216, in insureContext
+    return allContexte[rank]
+KeyError: 2
+/dev/input/event0 grabbed !/dev/input/event1 grabbed !
+
+                        
+[NEW] Controller B8:27:EB:5E:DE:B0 akuino6003 [default]
+
+                        
+[NEW] Device 00:06:91:9A:15:41 CT1015J14199
+
+connect 00:06:91:9A:15:41
+Scanner 00:06:91:9A:15:41 is there
+                        
+[NEW] Device 00:05:4F:DA:63:03 nuvi #3820056884
+
+Scanner 00:05:4F:DA:63:03 is there
+                        
+[NEW] Device 00:06:00:04:16:51 CT1016405100
+
+connect 00:06:00:04:16:51
+Scanner 00:06:00:04:16:51 is there
+[bluetooth]# power on
+
+                        
+Changing power on succeeded
+
+[bluetooth]# scan on
+
+                        
+[bluetooth]# connect 00:06:91:9A:15:41
+
+Attempting to connect to 00:06:91:9A:15:41
+
+                        
+Failed to connect: org.bluez.Error.Failed
+
+[bluetooth]# connect 00:06:00:04:16:51
+
+Attempting to connect to 00:06:00:04:16:51
+
+                        
+
+ 1:  9990000000111
+Caro is connected with : 1
+Veuillez choisir: 
+!Vente Bracelets,
+!Vente Produits,
+!ou Gestion
+- - - - -
+
+ 0:  1000000010039
+!Veuillez vous identifier
+- - - - -
+
+ 0:  9990000000128
+DANI is connected with : 0
+Veuillez choisir: 
+!Vente Bracelets,
+!ou Vente Produits
+- - - - -
+                        
+[CHG] Device 00:06:00:04:16:51 Connected: no
+
+connect 00:06:00:04:16:51
+Scanner 00:06:00:04:16:51 is changing
+[bluetooth]# connect 00:06:00:04:16:51
+
+Attempting to connect to 00:06:00:04:16:51
+
+Sensor battery: 13.26 V
+                        
+Failed to connect: org.bluez.Error.Failed
+
+                        
+[CHG] Device 00:06:00:04:16:51 Connected: yes
+
+Scanner 00:06:00:04:16:51 is connected
+Traceback (most recent call last):
+  File "/akuinoshare/BARBARA/program/barbara.py", line 2371, in InputListThread
+    currScanner.reader = InputEventThread(currScanner)
+  File "/akuinoshare/BARBARA/program/barbara.py", line 2231, in __init__
+    self.dev = evdev.InputDevice("/dev/input/event"+unicode(self.currScanner.numDev))
+  File "/usr/local/lib/python2.7/dist-packages/evdev/device.py", line 129, in __init__
+    fd = os.open(dev, os.O_RDONLY | os.O_NONBLOCK)
+OSError: [Errno 13] Permission denied: '/dev/input/event1'
+/dev/input/event1 grabbed !
+Sensor battery: 13.24 V
+Sensor battery: 13.24 V
+Sensor battery: 13.22 V
+Sensor battery: 13.2 V
+Sensor battery: 13.26 V
+Sensor battery: 13.19 V
+Sensor battery: 13.25 V
+Sensor battery: 13.25 V
+Sensor battery: 13.26 V
+Sensor battery: 13.12 V
+Sensor battery: 13.22 V
+Sensor battery: 13.2 V
+Sensor battery: 13.21 V
+Sensor battery: 13.15 V
+Sensor battery: 13.23 V
+Sensor battery: 13.2 V
+Sensor battery: 13.25 V
+Sensor battery: 13.2 V
+Sensor battery: 13.24 V
+Sensor battery: 13.24 V
+Sensor battery: 13.24 V
+Sensor battery: 13.24 V
+Sensor battery: 13.23 V
+Sensor battery: 13.22 V
+Sensor battery: 13.22 V
+Sensor battery: 13.17 V
+Sensor battery: 13.2 V
+Sensor battery: 13.21 V
+Sensor battery: 13.2 V
+                        
+[CHG] Device 00:06:00:04:16:51 Connected: no
+
+connect 00:06:00:04:16:51
+Scanner 00:06:00:04:16:51 is changing
+[bluetooth]# connect 00:06:00:04:16:51
+
+Attempting to connect to 00:06:00:04:16:51
+
+[bluetooth]# scan off
+
+                        
+                        
+[CHG] Device 00:06:91:9A:15:41 Connected: no
+
+connect 00:06:91:9A:15:41
+Scanner 00:06:91:9A:15:41 is changing
+[bluetooth]# connect 00:06:91:9A:15:41
+
+Attempting to connect to 00:06:91:9A:15:41
+
+[bluetooth]# scan on
+
+                        
+Sensor battery: 13.26 V
+                        
+Failed to connect: org.bluez.Error.Failed
+
+                        
+Failed to connect: org.bluez.Error.Failed
+
+Sensor battery: 13.23 V
+Sensor battery: 13.25 V
+Sensor battery: 13.22 V
+Sensor battery: 13.2 V
+Sensor battery: 13.25 V
+Sensor battery: 13.25 V
+Sensor battery: 13.23 V
+Sensor battery: 13.13 V
+Sensor battery: 13.25 V
+Sensor battery: 13.21 V
+Sensor battery: 13.23 V
+Sensor battery: 13.2 V
+Sensor battery: 13.24 V
+Sensor battery: 13.24 V
+Sensor battery: 13.25 V
+Sensor battery: 13.26 V
+Sensor battery: 13.25 V
+Sensor battery: 13.25 V
+Sensor battery: 13.25 V
+Sensor battery: 13.26 V
+Sensor battery: 13.22 V
+Sensor battery: 13.27 V
+Sensor battery: 13.27 V
+Sensor battery: 13.24 V
+Sensor battery: 13.25 V
+Sensor battery: 13.26 V
+Sensor battery: 13.24 V
+Sensor battery: 13.26 V
+Sensor battery: 13.22 V
+Sensor battery: 13.25 V
+Sensor battery: 13.25 V
+Sensor battery: 13.25 V
+Sensor battery: 13.25 V
+Sensor battery: 13.21 V
+Sensor battery: 13.24 V
+Sensor battery: 13.22 V
+Sensor battery: 13.21 V
+Sensor battery: 13.25 V
+Sensor battery: 13.26 V
+Sensor battery: 13.25 V
+Sensor battery: 13.22 V
+Sensor battery: 13.25 V
+Sensor battery: 13.26 V
+Sensor battery: 13.22 V
+Sensor battery: 13.25 V
+Sensor battery: 13.24 V
+Sensor battery: 13.25 V
+Sensor battery: 13.25 V
+Sensor battery: 13.23 V
+Sensor battery: 13.25 V
+Sensor battery: 13.23 V
+Sensor battery: 13.22 V
+Sensor battery: 13.22 V
+Sensor battery: 13.25 V
+Sensor battery: 13.12 V
+Sensor battery: 13.24 V
+Sensor battery: 13.24 V
+Sensor battery: 13.24 V
+Sensor battery: 13.21 V
+Sensor battery: 13.24 V
+Sensor battery: 13.22 V
+Sensor battery: 13.24 V
+Sensor battery: 13.26 V
+Sensor battery: 13.25 V
+Sensor battery: 13.25 V
+Sensor battery: 12.94 V
+Sensor battery: 13.27 V
+Sensor battery: 13.25 V
+Sensor battery: 13.51 V
+Sensor battery: 13.25 V
+Sensor battery: 13.25 V
+Sensor battery: 13.22 V
+Sensor battery: 13.25 V
+Sensor battery: 13.21 V
+Sensor battery: 13.2 V
+Sensor battery: 13.25 V
+Sensor battery: 13.23 V
+Sensor battery: 13.2 V
+Sensor battery: 13.22 V
+Sensor battery: 13.24 V
+Sensor battery: 13.23 V
+Sensor battery: 13.21 V
+Sensor battery: 13.15 V
+Sensor battery: 13.21 V
+Sensor battery: 13.21 V
+Sensor battery: 13.21 V
+Sensor battery: 13.21 V
+Sensor battery: 13.23 V
+Sensor battery: 13.22 V
+Sensor battery: 13.61 V
+Sensor battery: 13.22 V
+Sensor battery: 13.25 V
+Sensor battery: 13.62 V
+                        
+[DEL] Device 00:06:00:04:16:51 CT1016405100
+
+Scanner 00:06:00:04:16:51 is gone
+                        
+[DEL] Device 00:06:91:9A:15:41 CT1015J14199
+
+Scanner 00:06:91:9A:15:41 is gone
+Sensor battery: 13.2 V
+Sensor battery: 13.21 V
+Sensor battery: 13.25 V
+Sensor battery: 13.2 V
+Sensor battery: 13.25 V
+
+>>> ================================ RESTART ================================
+>>> 
+[u'akuino6003.ini', u'system', u'PCB', u'ELA', u'bluetooth', u'wifi', u'owfs', u'OLED', u'battery', u'shutdown', u'running', u'keypad']
+Battery voltage divider=10.0
+/run/akuino/
+/run/akuino/
+BLINE 3 mm,0 mm
+SIZE 24 mm,100 mm
+DIRECTION 0
+BLINEDETECT
+
+---
+DISPLAY OFF
+BLINE 3 mm,0 mm
+SIZE 24 mm,100 mm
+DIRECTION 0
+CLS
+TEXT 180,200,"2",90,1,1,"%(name)s"
+BARCODE 145,200,"EAN13",100,1,90,4,4,"%(barcode)s"
+PRINT 1,1
+CLS
+EOJ
+
+---
+http://0.0.0.0:8890/
+Screen : 1920x1152
+                        
+[NEW] Controller B8:27:EB:5E:DE:B0 akuino6003 [default]
+
+                        
+[NEW] Device 00:05:4F:DA:63:03 nuvi #3820056884
+
+Scanner 00:05:4F:DA:63:03 is there
+[bluetooth]# power on
+
+[bluetooth]# scan on
+
+                        
+Changing power on succeeded
+
+                        
+Sensor battery: 13.12 V
+                        
+[NEW] Device 00:06:00:04:16:51 CT1016405100
+
+connect 00:06:00:04:16:51
+Scanner 00:06:00:04:16:51 is there
+[bluetooth]# agent on
+
+[bluetooth]# pair 00:06:00:04:16:51
+
+Attempting to pair with 00:06:00:04:16:51
+
+Exception in thread Thread-15:
+Traceback (most recent call last):
+  File "/usr/lib/python2.7/threading.py", line 810, in __bootstrap_inner
+    self.run()
+  File "/usr/lib/python2.7/threading.py", line 763, in run
+    self.__target(*self.__args, **self.__kwargs)
+  File "/akuinoshare/BARBARA/program/barbara.py", line 2406, in InputListThread
+    bluetooth.pairingDevice()
+  File "/akuinoshare/BARBARA/program/bluetoothScanner.py", line 47, in pairingDevice
+    self.pairingNextDevice()
+  File "/akuinoshare/BARBARA/program/bluetoothScanner.py", line 59, in pairingNextDevice
+    print "Pairing "+str(currScanner)
+  File "/akuinoshare/BARBARA/program/Configuration.py", line 860, in __str__
+    string = string + u"\n" + field + u" : " + self.fields[field]
+TypeError: coercing to Unicode: need string or buffer, NoneType found
+                        
+
+[bluetooth]# connect 00:06:00:04:16:51
+
+Attempting to connect to 00:06:00:04:16:51
+
+Sensor battery: 13.2 V
+                        
+[CHG] Device 00:06:00:04:16:51 Connected: yes
+
+Scanner 00:06:00:04:16:51 is connected
+                        
+Request PIN code
+
+Sensor battery: 13.26 V
+                        
+[agent] Enter PIN code: 
+PIN=10010
+                                   
+Failed to connect: org.bluez.Error.Failed
+
+[agent] Enter PIN code: 10010
+
+[bluetooth]# trust 00:06:00:04:16:51
+
+                        
+[CHG] Device 00:06:00:04:16:51 Trusted: yes
+
+connect 00:06:00:04:16:51
+Scanner 00:06:00:04:16:51 is changing
+                        
+Changing 00:06:00:04:16:51 trust succeeded
+
+[bluetooth]# connect 00:06:00:04:16:51
+
+Attempting to connect to 00:06:00:04:16:51
+
+                        
+[CHG] Device 00:06:00:04:16:51 Paired: yes
+
+connect 00:06:00:04:16:51
+Scanner 00:06:00:04:16:51 is changing
+                        
+                        
+Failed to connect: org.bluez.Error.NotAvailable
+
+[bluetooth]# connect 00:06:00:04:16:51
+
+Attempting to connect to 00:06:00:04:16:51
+
+                        
+Failed to connect: org.bluez.Error.NotAvailable
+
+                        
+Sensor battery: 13.16 V[CHG] Device 00:06:00:04:16:51 Connected: no
+
+
+connect 00:06:00:04:16:51
+Scanner 00:06:00:04:16:51 is changing
+[bluetooth]# connect 00:06:00:04:16:51
+
+Attempting to connect to 00:06:00:04:16:51
+
+                        
+[CHG] Device 00:06:00:04:16:51 Connected: yes
+
+Scanner 00:06:00:04:16:51 is connected
+                        
+[CHG] Device 00:06:00:04:16:51 UUIDs:
+
+connect 00:06:00:04:16:51
+Scanner 00:06:00:04:16:51 is changing
+                        
+[bluetooth]# connect 00:06:00:04:16:51
+
+Attempting to connect to 00:06:00:04:16:51
+
+                        
+                        
+Sensor battery: 13.23 V
+Sensor battery: 13.25 V
+Sensor battery: 13.25 V
+                        
+[CHG] Device 00:06:00:04:16:51 Connected: no
+
+connect 00:06:00:04:16:51
+Scanner 00:06:00:04:16:51 is changing
+[bluetooth]# connect 00:06:00:04:16:51
+
+Attempting to connect to 00:06:00:04:16:51
+
+[bluetooth]# scan off
+
+                        
+Sensor battery: 13.23 V
+                        
+Failed to connect: org.bluez.Error.Failed
+
+                        
+[CHG] Device 00:06:00:04:16:51 RSSI: -87
+
+connect 00:06:00:04:16:51
+Scanner 00:06:00:04:16:51 is changing
+[bluetooth]# connect 00:06:00:04:16:51
+
+Attempting to connect to 00:06:00:04:16:51
+
+Sensor battery: 13.25 V
+                        
+[CHG] Device 00:06:00:04:16:51 Connected: yes
+
+Scanner 00:06:00:04:16:51 is connected
+                        
+Sensor battery: 13.24 V
+Sensor battery: 13.25 V
+Sensor battery: 13.24 V
+Sensor battery: 13.25 V
+Sensor battery: 13.24 V
+Sensor battery: 13.24 V
+Sensor battery: 13.25 V
+Sensor battery: 13.25 V
+Sensor battery: 13.26 V
+Sensor battery: 13.22 V
+Sensor battery: 13.25 V
+Sensor battery: 13.22 V
+Sensor battery: 13.27 V
+Sensor battery: 13.12 V
+Sensor battery: 13.25 V
+Sensor battery: 13.25 V
+Sensor battery: 13.16 V
+Sensor battery: 13.25 V
+Sensor battery: 13.25 V
+Sensor battery: 13.2 V
+Sensor battery: 13.24 V
+Sensor battery: 13.24 V
+Sensor battery: 13.22 V
+Sensor battery: 13.12 V
+Sensor battery: 13.12 V
+
+>>> ================================ RESTART ================================
+>>> 
+[u'akuino6003.ini', u'system', u'PCB', u'ELA', u'bluetooth', u'wifi', u'owfs', u'OLED', u'battery', u'shutdown', u'running', u'keypad']
+Battery voltage divider=10.0
+/run/akuino/
+/run/akuino/
+BLINE 3 mm,0 mm
+SIZE 24 mm,100 mm
+DIRECTION 0
+BLINEDETECT
+
+---
+DISPLAY OFF
+BLINE 3 mm,0 mm
+SIZE 24 mm,100 mm
+DIRECTION 0
+CLS
+TEXT 180,200,"2",90,1,1,"%(name)s"
+BARCODE 145,200,"EAN13",100,1,90,4,4,"%(barcode)s"
+PRINT 1,1
+CLS
+EOJ
+
+---
+http://0.0.0.0:8890/Screen : 1920x1152
+
+<<power on
+
+<<scan on
+
+>>[bluetooth]# [0;94m[bluetooth][0m#                         [[0;92mNEW[0m] Controller B8:27:EB:5E:DE:B0 akuino6003 [default]
+
+Exception in thread Thread-14:
+Traceback (most recent call last):
+  File "/usr/lib/python2.7/threading.py", line 810, in __bootstrap_inner
+    self.run()
+  File "/usr/lib/python2.7/threading.py", line 763, in run
+    self.__target(*self.__args, **self.__kwargs)
+  File "/akuinoshare/BARBARA/program/bluetoothScanner.py", line 120, in control
+    print u" ["+lines+u"]"
+TypeError: coercing to Unicode: need string or buffer, list found
+
+Sensor battery: 13.1 V
+Sensor battery: 13.25 V
+Sensor battery: 13.25 V
+
+>>> ================================ RESTART ================================
+>>> 
+[u'akuino6003.ini', u'system', u'PCB', u'ELA', u'bluetooth', u'wifi', u'owfs', u'OLED', u'battery', u'shutdown', u'running', u'keypad']
+Battery voltage divider=10.0
+/run/akuino/
+/run/akuino/
+BLINE 3 mm,0 mm
+SIZE 24 mm,100 mm
+DIRECTION 0
+BLINEDETECT
+
+---
+DISPLAY OFF
+BLINE 3 mm,0 mm
+SIZE 24 mm,100 mm
+DIRECTION 0
+CLS
+TEXT 180,200,"2",90,1,1,"%(name)s"
+BARCODE 145,200,"EAN13",100,1,90,4,4,"%(barcode)s"
+PRINT 1,1
+CLS
+EOJ
+
+---
+http://0.0.0.0:8890/
+ Screen : 1920x1152
+<<power on
+<<scan on
+
+
+>>[bluetooth]# [0;94m[bluetooth][0m#                         [[0;92mNEW[0m] Controller B8:27:EB:5E:DE:B0 akuino6003 [default]
+
+ [[bluetooth]# ]
+ [[bluetooth]# ]
+ [                        ]
+ [[NEW] Controller B8:27:EB:5E:DE:B0 akuino6003 [default]
+]
+>>[0;94m[bluetooth][0m#                         [[0;92mNEW[0m] Device 00:06:00:04:16:51 CT1016405100
+
+ [[bluetooth]# ]
+ [                        ]
+ [[NEW] Device 00:06:00:04:16:51 CT1016405100
+]
+connect 00:06:00:04:16:51
+<<connect 00:06:00:04:16:51
+
+<<agent on
+pair 00:06:00:04:16:51
+Scanner 00:06:00:04:16:51 is there
+
+>>[0;94m[bluetooth][0m#                         [[0;92mNEW[0m] Device 00:05:4F:DA:63:03 nuvi #3820056884
+
+ [[bluetooth]# ]
+ [                        ]
+ [[NEW] Device 00:05:4F:DA:63:03 nuvi #3820056884
+]
+Scanner 00:05:4F:DA:63:03 is there
+>>[0;94m[bluetooth][0m# power on
+
+ [[bluetooth]# power on
+]
+>>[0;94m[bluetooth][0m#                         Changing power on succeeded
+
+ [[bluetooth]# ]Exception in thread Thread-15:
+Traceback (most recent call last):
+  File "/usr/lib/python2.7/threading.py", line 810, in __bootstrap_inner
+    self.run()
+  File "/usr/lib/python2.7/threading.py", line 763, in run
+    self.__target(*self.__args, **self.__kwargs)
+  File "/akuinoshare/BARBARA/program/barbara.py", line 2406, in InputListThread
+    bluetooth.pairingDevice()
+  File "/akuinoshare/BARBARA/program/bluetoothScanner.py", line 47, in pairingDevice
+    self.pairingNextDevice()
+  File "/akuinoshare/BARBARA/program/bluetoothScanner.py", line 59, in pairingNextDevice
+    print "Pairing "+str(currScanner)
+  File "/akuinoshare/BARBARA/program/Configuration.py", line 860, in __str__
+    string = string + u"\n" + field + u" : " + self.fields[field]
+TypeError: coercing to Unicode: need string or buffer, NoneType found
+
+
+ [                        ]
+ [Changing power on succeeded
+]
+>>[0;94m[bluetooth][0m# scan on
+
+ [[bluetooth]# scan on
+]
+>>[0;94m[bluetooth][0m#                         Discovery started
+
+ [[bluetooth]# ]
+ [                        ]
+ [Discovery started
+]
+>>[0;94m[bluetooth][0m# connect 00:06:00:04:16:51
+
+ [[bluetooth]# connect 00:06:00:04:16:51
+]
+>>Attempting to connect to 00:06:00:04:16:51
+
+ [Attempting to connect to 00:06:00:04:16:51
+]
+>>[0;94m[bluetooth][0m#                         Connection successful
+
+ [[bluetooth]# ]
+ [                        ]
+ [Connection successful
+]
+>>[0;94m[bluetooth][0m# agent on
+
+ [[bluetooth]# agent on
+]
+>>[0;94m[bluetooth][0m# pair 00:06:00:04:16:51
+
+ [[bluetooth]# pair 00:06:00:04:16:51
+]
+>>Attempting to pair with 00:06:00:04:16:51
+
+ [Attempting to pair with 00:06:00:04:16:51
+]
+>>[0;94m[bluetooth][0m#                         Agent registered
+
+ [[bluetooth]# ]
+ [                        ]
+ [Agent registered
+]
+>>[0;94m[bluetooth][0m#                         Failed to pair: org.bluez.Error.AlreadyExists
+
+ [[bluetooth]# ]
+ [                        ]
+ [Failed to pair: org.bluez.Error.AlreadyExists
+]
+>>[0;94m[bluetooth][0m#                         [[0;93mCHG[0m] Device 00:06:00:04:16:51 Connected: no
+
+ [[bluetooth]# ]
+ [                        ]
+ [[CHG] Device 00:06:00:04:16:51 Connected: no
+]
+connect 00:06:00:04:16:51
+<<connect 00:06:00:04:16:51
+
+Scanner 00:06:00:04:16:51 is changing
+>>[0;94m[bluetooth][0m# connect 00:06:00:04:16:51
+
+ [[bluetooth]# connect 00:06:00:04:16:51
+]
+>>Attempting to connect to 00:06:00:04:16:51
+
+ [Attempting to connect to 00:06:00:04:16:51
+]
+>>[0;94m[bluetooth][0m#                         Failed to connect: org.bluez.Error.Failed
+
+ [[bluetooth]# ]
+ [                        ]
+ [Failed to connect: org.bluez.Error.Failed
+]
+Sensor battery: 13.23 V
+Sensor battery: 13.13 V
+Sensor battery: 13.24 V
+Sensor battery: 13.25 V
+
+>>> ================================ RESTART ================================
+>>> 
+[u'akuino6003.ini', u'system', u'PCB', u'ELA', u'bluetooth', u'wifi', u'owfs', u'OLED', u'battery', u'shutdown', u'running', u'keypad']
+Battery voltage divider=10.0
+/run/akuino/
+/run/akuino/
+BLINE 3 mm,0 mm
+SIZE 24 mm,100 mm
+DIRECTION 0
+BLINEDETECT
+
+---
+DISPLAY OFF
+BLINE 3 mm,0 mm
+SIZE 24 mm,100 mm
+DIRECTION 0
+CLS
+TEXT 180,200,"2",90,1,1,"%(name)s"
+BARCODE 145,200,"EAN13",100,1,90,4,4,"%(barcode)s"
+PRINT 1,1
+CLS
+EOJ
+
+---
+http://0.0.0.0:8890/
+Screen : 1920x1152
+<<power on
+<<scan on
+
+
+>>[bluetooth]# [0;94m[bluetooth][0m#                         [[0;92mNEW[0m] Controller B8:27:EB:5E:DE:B0 akuino6003 [default]
+
+ <[bluetooth]# [bluetooth]#                         [NEW] Controller B8:27:EB:5E:DE:B0 akuino6003 [default]
+>
+>>[0;94m[bluetooth][0m#                         [[0;92mNEW[0m] Device 00:06:00:04:16:51 CT1016405100
+
+ <[bluetooth]#                         [NEW] Device 00:06:00:04:16:51 CT1016405100
+>
+>>[0;94m[bluetooth][0m#                         [[0;92mNEW[0m] Device 00:05:4F:DA:63:03 nuvi #3820056884
+
+ <[bluetooth]#                         [NEW] Device 00:05:4F:DA:63:03 nuvi #3820056884
+>
+>>[0;94m[bluetooth][0m# power on
+
+ <[bluetooth]# power on
+>
+>>[0;94m[bluetooth][0m#                         Changing power on succeeded
+
+ <[bluetooth]#                         Changing power on succeeded
+>
+>>[0;94m[bluetooth][0m# scan on
+
+ <[bluetooth]# scan on
+>
+>>[0;94m[bluetooth][0m#                         Discovery started
+
+ <[bluetooth]#                         Discovery started
+>
+Sensor battery: 13.08 V
+Sensor battery: 13.26 V
+Sensor battery: 13.22 V
+Sensor battery: 13.26 V
+Sensor battery: 13.25 V
+Sensor battery: 13.26 V
+Sensor battery: 13.18 V
+>>[0;94m[bluetooth][0m#                         [[0;93mCHG[0m] Device 00:06:00:04:16:51 RSSI: -73
+
+ <[bluetooth]#                         [CHG] Device 00:06:00:04:16:51 RSSI: -73
+>
+Sensor battery: 13.2 V
+Sensor battery: 13.13 V
+Sensor battery: 13.12 V
+>>[0;94m[bluetooth][0m#                         [[0;91mDEL[0m] Device 00:06:00:04:16:51 CT1016405100
+
+ <[bluetooth]#                         [DEL] Device 00:06:00:04:16:51 CT1016405100
+>
+>>[0;94m[bluetooth][0m#                         [[0;92mNEW[0m] Device 00:06:00:04:16:51 CT1016405100
+
+ <[bluetooth]#                         [NEW] Device 00:06:00:04:16:51 CT1016405100
+>
+Sensor battery: 13.27 V
+>>[0;94m[bluetooth][0m#                         [[0;93mCHG[0m] Device 00:06:00:04:16:51 RSSI: -87
+
+ <[bluetooth]#                         [CHG] Device 00:06:00:04:16:51 RSSI: -87
+>
+Sensor battery: 13.24 V
+Sensor battery: 13.23 V
+>>[0;94m[bluetooth][0m#                         [[0;93mCHG[0m] Device 00:06:00:04:16:51 RSSI: -73
+
+ <[bluetooth]#                         [CHG] Device 00:06:00:04:16:51 RSSI: -73
+>
+Sensor battery: 13.24 V
+Sensor battery: 13.25 V
+>>[0;94m[bluetooth][0m#                         [[0;93mCHG[0m] Device 00:06:00:04:16:51 RSSI: -82
+
+ <[bluetooth]#                         [CHG] Device 00:06:00:04:16:51 RSSI: -82
+>
+Sensor battery: 13.21 V
+>>[0;94m[bluetooth][0m#                         [[0;93mCHG[0m] Device 00:06:00:04:16:51 RSSI: -74
+
+ <[bluetooth]#                         [CHG] Device 00:06:00:04:16:51 RSSI: -74
+>
+Sensor battery: 13.24 V
+Sensor battery: 13.25 V
+Sensor battery: 13.26 V
+Sensor battery: 13.25 V
+>>[0;94m[bluetooth][0m#                         [[0;93mCHG[0m] Device 00:06:00:04:16:51 RSSI: -85
+
+ <[bluetooth]#                         [CHG] Device 00:06:00:04:16:51 RSSI: -85
+>
+>>[0;94m[bluetooth][0m#                         [[0;93mCHG[0m] Device 00:06:00:04:16:51 RSSI: -69
+
+ <[bluetooth]#                         [CHG] Device 00:06:00:04:16:51 RSSI: -69
+>
+Sensor battery: 13.22 V
+>>[0;94m[bluetooth][0m#                         [[0;93mCHG[0m] Device 00:06:00:04:16:51 RSSI: -80
+
+ <[bluetooth]#                         [CHG] Device 00:06:00:04:16:51 RSSI: -80
+>
+Sensor battery: 13.25 V
+Sensor battery: 13.2 V
+Sensor battery: 13.21 V
+Sensor battery: 13.24 V
+Sensor battery: 13.24 V
+Sensor battery: 13.23 V
+Sensor battery: 13.23 V
+Sensor battery: 13.25 V
+Sensor battery: 13.23 V
+Sensor battery: 13.11 V
+Sensor battery: 13.25 V
+Sensor battery: 13.22 V
+Sensor battery: 13.23 V
+Sensor battery: 13.15 V
+Sensor battery: 13.25 V
+Sensor battery: 13.23 V
+Sensor battery: 13.25 V
+Sensor battery: 13.22 V
+
+>>> ================================ RESTART ================================
+>>> 
+[u'akuino6003.ini', u'system', u'PCB', u'ELA', u'bluetooth', u'wifi', u'owfs', u'OLED', u'battery', u'shutdown', u'running', u'keypad']
+Battery voltage divider=10.0
+/run/akuino/
+/run/akuino/
+BLINE 3 mm,0 mm
+SIZE 24 mm,100 mm
+DIRECTION 0
+BLINEDETECT
+
+---
+DISPLAY OFF
+BLINE 3 mm,0 mm
+SIZE 24 mm,100 mm
+DIRECTION 0
+CLS
+TEXT 180,200,"2",90,1,1,"%(name)s"
+BARCODE 145,200,"EAN13",100,1,90,4,4,"%(barcode)s"
+PRINT 1,1
+CLS
+EOJ
+
+---
+http://0.0.0.0:8890/
+ Screen : 1920x1152
+<<power on
+<<scan on
+
+
+>>[bluetooth]# [0;94m[bluetooth][0m#                         [[0;92mNEW[0m] Controller B8:27:EB:5E:DE:B0 akuino6003 [default]
+<<
+ <[bluetooth]# [bluetooth]#                         [NEW] Controller B8:27:EB:5E:DE:B0 akuino6003 [default]>
+ <>
+>>[0;94m[bluetooth][0m#                         [[0;92mNEW[0m] Device 00:06:00:04:16:51 CT1016405100
+<<
+ <[bluetooth]#                         [NEW] Device 00:06:00:04:16:51 CT1016405100>
+ <>
+>>[0;94m[bluetooth][0m#                         [[0;92mNEW[0m] Device 00:05:4F:DA:63:03 nuvi #3820056884
+<<
+ <[bluetooth]#                         [NEW] Device 00:05:4F:DA:63:03 nuvi #3820056884>
+ <>
+>>[0;94m[bluetooth][0m# power on
+<<
+ <[bluetooth]# power on>
+ <>
+>>[0;94m[bluetooth][0m#                         Changing power on succeeded
+<<
+ <[bluetooth]#                         Changing power on succeeded>
+ <>
+>>[0;94m[bluetooth][0m# scan on
+<<
+ <[bluetooth]# scan on>
+ <>
+>>[0;94m[bluetooth][0m#                         Discovery started
+<<
+ <[bluetooth]#                         Discovery started>
+ <>
+>>[0;94m[bluetooth][0m#                         [[0;93mCHG[0m] Controller B8:27:EB:5E:DE:B0 Discovering: yes
+<<
+ <[bluetooth]#                         [CHG] Controller B8:27:EB:5E:DE:B0 Discovering: yes>
+ <>
+>>[0;94m[bluetooth][0m#                         [[0;93mCHG[0m] Device 00:06:00:04:16:51 RSSI: -76
+<<
+ <[bluetooth]#                         [CHG] Device 00:06:00:04:16:51 RSSI: -76>
+ <>
+Sensor battery: 13.24 V
+Sensor battery: 13.25 V
+Sensor battery: 13.26 V
+>>[0;94m[bluetooth][0m#                         [[0;93mCHG[0m] Device 00:06:00:04:16:51 RSSI: -84
+<<
+ <[bluetooth]#                         [CHG] Device 00:06:00:04:16:51 RSSI: -84>
+ <>
+Sensor battery: 13.22 V
+Sensor battery: 13.21 V
+>>[0;94m[bluetooth][0m#                         [[0;93mCHG[0m] Device 00:06:00:04:16:51 RSSI: -76
+<<
+ <[bluetooth]#                         [CHG] Device 00:06:00:04:16:51 RSSI: -76>
+ <>
+Sensor battery: 13.12 V
+Sensor battery: 13.21 V
+Sensor battery: 13.22 V
+>>[0;94m[bluetooth][0m#                         [[0;91mDEL[0m] Device 00:05:4F:DA:63:03 nuvi #3820056884
+<<
+ <[bluetooth]#                         [DEL] Device 00:05:4F:DA:63:03 nuvi #3820056884>
+ <>
+>>[0;94m[bluetooth][0m#                         [[0;91mDEL[0m] Device 00:06:00:04:16:51 CT1016405100
+<<
+ <[bluetooth]#                         [DEL] Device 00:06:00:04:16:51 CT1016405100>
+ <>
+Sensor battery: 13.23 V
+>>[0;94m[bluetooth][0m#                         [[0;92mNEW[0m] Device 00:06:00:04:16:51 CT1016405100
+<<
+ <[bluetooth]#                         [NEW] Device 00:06:00:04:16:51 CT1016405100>
+ <>
+Sensor battery: 13.26 V
+Sensor battery: 13.23 V
+Sensor battery: 13.21 V
+Sensor battery: 13.24 V
+Sensor battery: 13.22 V
+Sensor battery: 13.23 V
+Sensor battery: 13.22 V
+Sensor battery: 13.25 V
+Sensor battery: 13.25 V
+Sensor battery: 13.22 V
+Sensor battery: 13.25 V
+Sensor battery: 13.22 V
+Sensor battery: 13.27 V
+Sensor battery: 13.22 V
+Sensor battery: 13.23 V
+Sensor battery: 13.24 V
+Sensor battery: 13.25 V
+Sensor battery: 13.24 V
+Sensor battery: 13.24 V
+Sensor battery: 13.23 V
+Sensor battery: 13.25 V
+Sensor battery: 13.23 V
+Sensor battery: 13.24 V
+Sensor battery: 13.26 V
+Sensor battery: 13.23 V
+Sensor battery: 13.24 V
+Sensor battery: 13.23 V
+Sensor battery: 13.26 V
+Sensor battery: 13.23 V
+Sensor battery: 13.24 V
+Sensor battery: 13.22 V
+Sensor battery: 13.25 V
+Sensor battery: 13.25 V
+Sensor battery: 13.22 V
+Sensor battery: 13.22 V
+Sensor battery: 13.23 V
+Sensor battery: 13.22 V
+Sensor battery: 13.22 V
+Sensor battery: 13.21 V
+Sensor battery: 13.26 V
+Sensor battery: 13.27 V
+Sensor battery: 13.15 V
+Sensor battery: 13.2 V
+Sensor battery: 13.25 V
+Sensor battery: 13.24 V
+Sensor battery: 13.2 V
+Sensor battery: 13.21 V
+Sensor battery: 13.2 V
+Sensor battery: 13.24 V
+Sensor battery: 13.23 V
+Sensor battery: 13.26 V
+Sensor battery: 13.22 V
+Sensor battery: 13.23 V
+Sensor battery: 13.23 V
+Sensor battery: 13.25 V
+Sensor battery: 13.24 V
+Sensor battery: 13.27 V
+Sensor battery: 13.25 V
+Sensor battery: 13.23 V
+Sensor battery: 13.11 V
+Sensor battery: 13.26 V
+Sensor battery: 13.16 V
+Sensor battery: 13.24 V
+Sensor battery: 13.25 V
+Sensor battery: 13.24 V
+Sensor battery: 13.22 V
+Sensor battery: 13.25 V
+Sensor battery: 13.26 V
+Sensor battery: 13.23 V
+Sensor battery: 13.24 V
+Sensor battery: 13.21 V
+Sensor battery: 13.23 V
+Sensor battery: 13.27 V
+Sensor battery: 13.22 V
+Sensor battery: 13.24 V
+Sensor battery: 13.22 V
+Sensor battery: 13.22 V
+Sensor battery: 13.23 V
+Sensor battery: 13.26 V
+Sensor battery: 13.24 V
+Sensor battery: 13.21 V
+
+>>> ================================ RESTART ================================
+>>> 
+[u'akuino6003.ini', u'system', u'PCB', u'ELA', u'bluetooth', u'wifi', u'owfs', u'OLED', u'battery', u'shutdown', u'running', u'keypad']
+Battery voltage divider=10.0
+/run/akuino/
+/run/akuino/
+BLINE 3 mm,0 mm
+SIZE 24 mm,100 mm
+DIRECTION 0
+BLINEDETECT
+
+---
+DISPLAY OFF
+BLINE 3 mm,0 mm
+SIZE 24 mm,100 mm
+DIRECTION 0
+CLS
+TEXT 180,200,"2",90,1,1,"%(name)s"
+BARCODE 145,200,"EAN13",100,1,90,4,4,"%(barcode)s"
+PRINT 1,1
+CLS
+EOJ
+
+---
+http://0.0.0.0:8890/
+Screen : 1920x1152
+<<power on
+<<scan on
+
+
+>>[bluetooth]# [0;94m[bluetooth][0m#                         [[0;92mNEW[0m] Controller B8:27:EB:5E:DE:B0 akuino6003 [default]
+<<
+ >[bluetooth]#  [bluetooth] #                         [ NEW ] Controller B8:27:EB:5E:DE:B0 akuino6003 [default]<
+ ><
+>>[0;94m[bluetooth][0m#                         [[0;92mNEW[0m] Device 00:06:00:04:16:51 CT1016405100
+<<
+ >[bluetooth] #                         [ NEW ] Device 00:06:00:04:16:51 CT1016405100<
+ ><
+>>[0;94m[bluetooth][0m# power on
+<<
+ >[bluetooth] # power on<
+ ><
+>>[0;94m[bluetooth][0m#                         Changing power on succeeded
+<<
+ >[bluetooth] #                         Changing power on succeeded<
+ ><
+>>[0;94m[bluetooth][0m# scan on
+<<
+ >[bluetooth] # scan on<
+ ><
+>>[0;94m[bluetooth][0m#                         Discovery started
+<<
+ >[bluetooth] #                         Discovery started<
+ ><
+>>[0;94m[bluetooth][0m#                         [[0;93mCHG[0m] Controller B8:27:EB:5E:DE:B0 Discovering: yes
+<<
+ >[bluetooth] #                         [ CHG ] Controller B8:27:EB:5E:DE:B0 Discovering: yes<
+ ><
+Sensor battery: 13.24 V
+Sensor battery: 13.23 V
+Sensor battery: 13.22 V
+Sensor battery: 13.21 V
+Sensor battery: 13.23 V
+Sensor battery: 13.25 V
+Sensor battery: 13.25 V
+Traceback (most recent call last):
+  File "/akuinoshare/BARBARA/program/barbara.py", line 2633, in <module>
+    tkdisplay_root.mainloop()
+  File "/usr/lib/python2.7/lib-tk/Tkinter.py", line 1124, in mainloop
+    self.tk.mainloop(n)
+  File "/usr/lib/python2.7/lib-tk/Tkinter.py", line 1530, in __call__
+    def __call__(self, *args):
+KeyboardInterrupt
+>>> Sensor battery: 13.24 V
+>>[0;94m[bluetooth][0m#                         [[0;91mDEL[0m] Device 00:06:00:04:16:51 CT1016405100
+<<
+ >[bluetooth] #                         [ DEL ] Device 00:06:00:04:16:51 CT1016405100<
+ ><
+================================ RESTART ================================
+>>> 
+[u'akuino6003.ini', u'system', u'PCB', u'ELA', u'bluetooth', u'wifi', u'owfs', u'OLED', u'battery', u'shutdown', u'running', u'keypad']
+Battery voltage divider=10.0
+/run/akuino/
+/run/akuino/
+BLINE 3 mm,0 mm
+SIZE 24 mm,100 mm
+DIRECTION 0
+BLINEDETECT
+
+---
+DISPLAY OFF
+BLINE 3 mm,0 mm
+SIZE 24 mm,100 mm
+DIRECTION 0
+CLS
+TEXT 180,200,"2",90,1,1,"%(name)s"
+BARCODE 145,200,"EAN13",100,1,90,4,4,"%(barcode)s"
+PRINT 1,1
+CLS
+EOJ
+
+---
+http://0.0.0.0:8890/
+Screen : 1920x1152
+<<power on
+
+<<scan on
+>>[bluetooth]# [0;94m[bluetooth][0m#                         [[0;92mNEW[0m] Controller B8:27:EB:5E:DE:B0 akuino6003 [default]
+<<
+
+ >[bluetooth]# [bluetooth]#  [NEW] Controller B8:27:EB:5E:DE:B0 akuino6003 [default]<
+>>[0;94m[bluetooth][0m# power on
+<<
+ >[bluetooth]# power on<
+>>[0;94m[bluetooth][0m#                         Changing power on succeeded
+<<
+ >[bluetooth]#  Changing power on succeeded<
+>>[0;94m[bluetooth][0m# scan on
+<<
+ >[bluetooth]# scan on<
+>>[0;94m[bluetooth][0m#                         Discovery started
+<<
+ >[bluetooth]#  Discovery started<
+>>[0;94m[bluetooth][0m#                         [[0;93mCHG[0m] Controller B8:27:EB:5E:DE:B0 Discovering: yes
+<<
+ >[bluetooth]#  [CHG] Controller B8:27:EB:5E:DE:B0 Discovering: yes<
+Sensor battery: 13.23 V
+Sensor battery: 13.27 V
+Sensor battery: 13.2 V
+Sensor battery: 13.22 V
+
+>>> ================================ RESTART ================================
+>>> 
+[u'akuino6003.ini', u'system', u'PCB', u'ELA', u'bluetooth', u'wifi', u'owfs', u'OLED', u'battery', u'shutdown', u'running', u'keypad']
+Battery voltage divider=10.0
+/run/akuino/
+/run/akuino/
+BLINE 3 mm,0 mm
+SIZE 24 mm,100 mm
+DIRECTION 0
+BLINEDETECT
+
+---
+DISPLAY OFF
+BLINE 3 mm,0 mm
+SIZE 24 mm,100 mm
+DIRECTION 0
+CLS
+TEXT 180,200,"2",90,1,1,"%(name)s"
+BARCODE 145,200,"EAN13",100,1,90,4,4,"%(barcode)s"
+PRINT 1,1
+CLS
+EOJ
+
+---
+http://0.0.0.0:8890/
+ Screen : 1920x1152
+<<power on
+<<scan on
+
+
+>>[bluetooth]# [0;94m[bluetooth][0m#                         [[0;92mNEW[0m] Controller B8:27:EB:5E:DE:B0 akuino6003 [default]
+<<
+ >[bluetooth]# [bluetooth]#  [NEW] Controller B8:27:EB:5E:DE:B0 akuino6003 [default]<
+>>[0;94m[bluetooth][0m# power on
+<<
+ >[bluetooth]# power on<
+>>[0;94m[bluetooth][0m#                         Changing power on succeeded
+<<
+ >[bluetooth]#  Changing power on succeeded<
+>>[0;94m[bluetooth][0m# scan on
+<<
+ >[bluetooth]# scan on<
+>>[0;94m[bluetooth][0m#                         Discovery started
+<<
+ >[bluetooth]#  Discovery started<
+>>[0;94m[bluetooth][0m#                         [[0;93mCHG[0m] Controller B8:27:EB:5E:DE:B0 Discovering: yes
+<<
+ >[bluetooth]#  [CHG] Controller B8:27:EB:5E:DE:B0 Discovering: yes<
+Sensor battery: 13.25 V
+Sensor battery: 13.25 V
