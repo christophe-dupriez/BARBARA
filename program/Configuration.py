@@ -35,7 +35,9 @@ def infloat(nbre):
 
 def digest(aString):
     return ("0000"+unicode(abs(zlib.crc32(aString))))[-4:]
-    
+
+render = web.template.render('templates/',base='layout')
+
 class auto_application_port(web.auto_application):
     def run(self, port=8890, *middleware):
         func = self.wsgifunc(*middleware)
@@ -266,6 +268,9 @@ class Configuration(object):
                 return None
         return None
 
+    def htmlNow(self):
+        return datetime.datetime.now().strftime("%Y/%m/%d %H:%M")
+
 class ConfigurationObject(object):
 
     def __init__(self):
@@ -304,6 +309,17 @@ class ConfigurationObject(object):
             return "OK"
         else:
             return "nok"
+
+    def htmlBarcode(self):
+        try:
+            if len(self.id) <= 13 :
+                aBarcode = EAN(unicode(self.id),writer=barcode.writer.ImageWriter())
+            else:  # On pourrait utiliser le Code128...
+                return None
+        except:
+            return None
+        aBarcode.save('/run/akuino/'+unicode(self.id))
+        return '/static/run/akuino/'+unicode(self.id)+'.png'
 
 class AllObjects(object):
 
@@ -719,8 +735,8 @@ class AllScanners(AllObjects):
     def newObject(self):
         return Scanner()
 
-    def defaultRow(self,key):
-        return {"time":unicode(datetime.datetime.now()),"mac":key,"pin":"","client":"1","name":digest(key),"user":""}
+    def defaultRow(self,key): #PIN par defaut selon la marque choisie!
+        return {"time":unicode(datetime.datetime.now()),"mac":key,"pin":"10010","client":"1","name":digest(key),"user":""}
 
 class User(ConfigurationObject):
 
@@ -825,6 +841,8 @@ class Products(ConfigurationObject):
         self.fields[u'deny'] = u'1'
 
     def isActive(self):
+        if not u"deny" in self.fields:
+            return True
         denial = self.fields[u"deny"]
         if denial:
             denial = denial[0].lower()
@@ -1014,6 +1032,13 @@ class generate_user(GenerateConfigurationObject):
 class save_user(SaveConfigurationObject):
     allObjects = c.AllUsers
     
+class print_users(app.page):
+    path = u'/users/print'
+
+    def GET(self):
+        web.header('Content-Type', u'text/html;charset=utf-8')
+        return render.users_print(c)
+    
 # Ajoute l'argent au bracelet
 class credit_brace(app.page):
     path = u'/brace/credit/(.*)/(.*)/(.*)/(.*)'
@@ -1078,25 +1103,36 @@ class buy_withbrace(app.page):
 class list_braces(ListConfigurationObject):
     allObjects = c.AllBraces
     
+class print_braces_code(app.page):
+    path = u'/braces/printcode'
+
+    def GET(self):
+        web.header('Content-Type', u'text/html;charset=utf-8')
+        return render.braces_printcode(c)
+
 class print_braces(app.page):
     path = u'/braces/print'
 
     def GET(self):
         web.header('Content-Type', u'text/html;charset=utf-8')
-        result = datetime.datetime.now().strftime("%Y/%m/%d %H:%M BRACES")  #affichage de la date et de l'heure
-        total = 0.0
-        for key in c.AllBraces.elements.keys():
-            try:
-                amount = c.AllBraces.elements[key].fields[u"amount"]
-                amount = infloat(amount)
-                if amount != 0.0:
-                    result+=u"<br/>"+unicode(key)+u" = "+unicode(amount)
-                    total += amount
-            except:
-                print (key+u" not printed.")
-                pass
-        result += u"<br/><br/>Total = "+unicode(total)
-        return result
+        return render.braces_print(c)
+
+##    def GET(self):
+##        web.header('Content-Type', u'text/html;charset=utf-8')
+##        result = datetime.datetime.now().strftime("%Y/%m/%d %H:%M BRACES")  #affichage de la date et de l'heure
+##        total = 0.0
+##        for key in c.AllBraces.elements.keys():
+##            try:
+##                amount = c.AllBraces.elements[key].fields[u"amount"]
+##                amount = infloat(amount)
+##                if amount != 0.0:
+##                    result+=u"<br/>"+unicode(key)+u" = "+unicode(amount)
+##                    total += amount
+##            except:
+##                print (key+u" not printed.")
+##                pass
+##        result += u"<br/><br/>Total = "+unicode(total)
+##        return result
     
 class get_brace(GetConfigurationObject):
     allObjects = c.AllBraces
@@ -1115,32 +1151,36 @@ class print_products(app.page):
 
     def GET(self):
         web.header('Content-Type', u'text/html;charset=utf-8')
-        result = datetime.datetime.now().strftime("%Y/%m/%d %H:%M CATALOGUE")  #affichage de la date et de l'heure
-        total = 0.0
-        for key in c.AllProducts.elements.keys():
-            result+=u"<br/>"+unicode(key)
-            try:
-                currProdFields = c.AllProducts.elements[key].fields
-                name = currProdFields[u"name"]
-                if name:
-                    result += u": "+name
-                amount = currProdFields[u"price"]
-                amount = infloat(amount)
-                if amount != 0.0:
-                    result += u" : "+unicode(amount) + u"€"
-                qty = currProdFields[u"qty"]
-                qty = infloat(qty)
-                if qty != 0.0:
-                    result += u" x "+unicode(qty)
-                    if amount != 0.0:
-                        prod_total = qty*amount
-                        result += u" = "+unicode(prod_total) + u"€"
-                        total += prod_total
-            except:
-                print (key+u" not printed.")
-                pass
-        result += u"<br/><br/>Total = "+unicode(total)+u"€"
-        return result
+        return render.products_print(c)
+
+##    def GET(self):
+##        web.header('Content-Type', u'text/html;charset=utf-8')
+##        result = datetime.datetime.now().strftime("%Y/%m/%d %H:%M CATALOGUE")  #affichage de la date et de l'heure
+##        total = 0.0
+##        for key in c.AllProducts.elements.keys():
+##            result+=u"<br/>"+unicode(key)
+##            try:
+##                currProdFields = c.AllProducts.elements[key].fields
+##                name = currProdFields[u"name"]
+##                if name:
+##                    result += u": "+name
+##                amount = currProdFields[u"price"]
+##                amount = infloat(amount)
+##                if amount != 0.0:
+##                    result += u" : "+unicode(amount) + u"€"
+##                qty = currProdFields[u"qty"]
+##                qty = infloat(qty)
+##                if qty != 0.0:
+##                    result += u" x "+unicode(qty)
+##                    if amount != 0.0:
+##                        prod_total = qty*amount
+##                        result += u" = "+unicode(prod_total) + u"€"
+##                        total += prod_total
+##            except:
+##                print (key+u" not printed.")
+##                pass
+##        result += u"<br/><br/>Total = "+unicode(total)+u"€"
+##        return result
     
 class get_product(GetConfigurationObject):
     allObjects = c.AllProducts
@@ -1160,29 +1200,7 @@ class print_scanners(app.page):
 
     def GET(self):
         web.header('Content-Type', u'text/html;charset=utf-8')
-        result = datetime.datetime.now().strftime("%Y/%m/%d %H:%M SCANNERS")  #affichage de la date et de l'heure
-        total = 0.0
-        for key in c.AllScanners.elements.keys():
-            result+=u"<br/>"+unicode(key)
-            try:
-                currScan = c.AllScanners.elements[key]
-                name = currScan.fields[u"name"]
-                if name:
-                    result += u": "+name
-                name = currScan.fields[u"pin"]
-                if name:
-                    result += u" #"+name
-                name = currScan.fields[u"client"]
-                if name:    
-                    result += u" -&gt; akuino"+name
-                if currScan.isActive():
-                    result+=" OK"
-                else:
-                    result+=" nok"
-            except:
-                print (key+u" not printed.")
-                pass
-        return result
+        return render.scanners_print(c)
     
 class get_scanner(GetConfigurationObject):
     allObjects = c.AllScanners
@@ -1195,3 +1213,17 @@ class save_scanner(SaveConfigurationObject):
 class generate_scanner(GenerateConfigurationObject):
     allObjects = c.AllScanners
     
+class print_config(app.page):
+    path = u'/config/print'
+
+    def GET(self):
+        web.header('Content-Type', u'text/html;charset=utf-8')
+        return render.config_print(c)
+    
+class index(app.page):
+    path = '/'
+
+    def GET(self):
+        web.header('Content-Type', u'text/html;charset=utf-8')
+        return render.index(c)
+        

@@ -1,0 +1,32 @@
+$def with (c)
+$var title = c.barbaraConfig.braceTitle
+$var curr = 'Produits&Services'
+$var now = c.htmlNow()
+<ul>
+	$ total = 0.0
+        $for key in c.AllProducts.elements.keys():
+            <li>
+		$ currScan = c.AllProducts.elements[key]
+                $ name = currScan.fields[u"name"]
+                $if name:
+                    <h4>$name</h4>
+		$ image = currScan.htmlBarcode()
+		$if image:
+		    <img src="$image" width="300px" height="100px">
+		$else:
+		    [<b>$currScan.id</b>]
+                $ name = currScan.fields[u"price"]
+		$ prix = 0.0
+                $if name:    
+                    <b>$name</b> €
+		    $ prix = float(name)
+                $ name = currScan.fields[u"qty"]
+                $if name:
+		    $ ext = prix*float(name)
+                    X $name = $ext €
+		    $ total = total+ext
+		$if not currScan.isActive():
+		    <b>NOT ACTIVE</b>
+	    </li>
+</ul>
+<h2>Total = $total €</h2>

@@ -1637,14 +1637,15 @@ class Contexte (): #threading.Thread
         self.produit.save(c,self.user)
         return True
 
-    def sauver_scanner(self,deny):
+    def sauver_scanner(self,destinationHote):
         if not self.scanner:
             return False
         self.scanner.fields[u"name"] = self.nom_choisi
         if self.qty_choisie and self.qty_choisie >= 0:
-            self.scanner.fields[u"pin"] = unicode(self.qty_choisie)
-        if deny:
-            self.scanner.fields[u"deny"] = deny
+            if destinationHote:
+                self.scanner.fields[u"client"] = unicode(self.qty_choisie)
+            else:
+                self.scanner.fields[u"pin"] = unicode(self.qty_choisie)
         self.scanner.save(c,self.user)
         return True
 
@@ -1897,7 +1898,8 @@ class Contexte (): #threading.Thread
                                 print "Desactiver Scanner"
                                 if self.scanner:
                                     self.scanner.setInactive()
-                                    if self.sauver_scanner("2"):
+                                    self.qty_choisie = 2 # Hote impossible: scanner desactive
+                                    if self.sauver_scanner(True):
                                         ecran_scanner(self)
                                     else:
                                         ecran_message(self,0,u"Désactiver Scanner",u"annulé")
@@ -1968,7 +1970,7 @@ class Contexte (): #threading.Thread
                                     self.partial_init()
                             elif self.mode == CB_Scanners:
                                 print "Sauver info Scanner"
-                                if self.sauver_scanner("0"):
+                                if self.sauver_scanner(True): # Qtite = Hote
                                     ecran_scanner(self)
                                 else:
                                     ecran_message(self,0,u"Modif.Scanner annulée")
@@ -1986,7 +1988,7 @@ class Contexte (): #threading.Thread
                                     self.partial_init()
                             elif self.mode == CB_Scanners:
                                 print "Sauver info Scanner"
-                                if self.sauver_scanner("1"):
+                                if self.sauver_scanner(False): #Qtite = PIN
                                     ecran_scanner(self)
                                 else:
                                     ecran_message(self,0,u"Modif.Scanner annulée")

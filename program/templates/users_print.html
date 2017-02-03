@@ -1,0 +1,22 @@
+$def with (c)
+$var title = c.barbaraConfig.braceTitle
+$var curr = 'Utilisateurs'
+$var now = c.htmlNow()
+<ul>
+        $for key in c.AllUsers.elements.keys():
+            <li>
+		$ currScan = c.AllUsers.elements[key]
+                    <h4>$currScan.id</h4>
+		$ image = currScan.htmlBarcode()
+		$if image:
+		    <img src="$image" width="300px" height="100px">
+		$else:
+		    [<b>$currScan.id</b>]
+                $ name = currScan.fields[u"name"]
+                $if name:    
+                    <b>$name</b>
+                $ name = currScan.fields[u"access"]
+                $if name:    
+                    Permissions=<b>$name</b>
+	    </li>
+</ul>

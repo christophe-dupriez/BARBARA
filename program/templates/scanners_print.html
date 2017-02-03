@@ -1,0 +1,25 @@
+$def with (c)
+$var title = c.barbaraConfig.braceTitle
+$var curr = 'Scanners'
+$var now = c.htmlNow()
+<h2>akuino$c.barbaraConfig.akuinoHost</h2>
+<ul>
+        $for key in c.AllScanners.elements.keys():
+            <li>
+		$ currScan = c.AllScanners.elements[key]
+		    $key : 
+                $ name = currScan.fields[u"name"]
+                $if name:
+                    [<b>$name</b>]
+                $ name = currScan.fields[u"pin"]
+                $if name:
+                    pin=<b>$name</b>
+                $ name = currScan.fields[u"client"]
+                $if name:    
+                    Hôte:<b>akuino$name</b>
+                $if currScan.isActive():
+                    Statut: <b>OK</b>
+                $else:
+                    <b>nok</b>
+	    </li>
+</ul>

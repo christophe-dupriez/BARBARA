@@ -1,0 +1,34 @@
+$def with (c)
+$var title = c.barbaraConfig.braceTitle
+$var curr = 'Configuration'
+$var now = c.htmlNow()
+<h1>$c.barbaraConfig.braceTitle</h1>
+<h2>Central=akuino$c.barbaraConfig.akuinoHost</h2>
+<h3>general</h3>
+<ul>
+<li>language = $c.barbaraConfig.language</li>
+</ul>
+<h3>braces</h3>
+<ul>
+<li>title = $c.barbaraConfig.braceTitle</li>
+<li>min = $c.barbaraConfig.braceMin min brace number (12 digits)</li>
+<li>max = $c.barbaraConfig.braceMax max brace number (12 digits)</li>
+<li>amount = $c.barbaraConfig.defaultAmount € default charge</li>
+</ul>
+<h3>network</h3>
+              <ul>
+                <li>broadcast = $c.barbaraConfig.broadcastPort port number for UDP broadcasts</li>
+                <li>delay = $c.barbaraConfig.broadcastDelay seconds between broadcasts</li>
+                <li>latency = $c.barbaraConfig.networkLatency seconds of errors between two computers clocks</li>
+                <li>port = $c.barbaraConfig.applicationPort port number for HTTP server</li>
+                <li>role = $c.barbaraConfig.applicationRole (c=central, b=client, a=autonomous)</li>
+              </ul>
+<h3>printer</h3>
+              <ul>
+                <li>directory = $c.barbaraConfig.printDirectory temporary print directory</li>
+                <li>barcode = $c.barbaraConfig.printBarcode</li>
+                <li>align = $c.barbaraConfig.alignPrinter</li>
+                <li>crlf = $c.barbaraConfig.crlf</li>
+                <li>lf = $c.barbaraConfig.lf</li>
+                <li>esc = $c.barbaraConfig.esc</li>
+              </ul>
