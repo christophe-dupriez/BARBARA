@@ -8,7 +8,7 @@ import time
 import SSD1306
 import threading
 
-baseDirTTF = "ttf/"
+baseDirTTF = "static/ttf/"
 
 class OLEDScreen:    
     disp = None

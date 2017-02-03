@@ -228,7 +228,7 @@ else:
 
 TAILLE_ECRAN = 4 # nombre d'elements que l'on affiche à la fois dans les stocks et la facture
 
-baseDirIMG = "img/"
+baseDirIMG = "static/img/"
 
 bluetooth = bluetoothScanner();
 bluetooth.config = c
