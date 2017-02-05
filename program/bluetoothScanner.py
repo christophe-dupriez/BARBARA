@@ -123,6 +123,11 @@ class bluetoothScanner():
         else:
             self.todo[scanner] = '!'
 
+    def addDisconnect(self,scanner):
+        if self.handle and scanner:
+            self.pushCommand("disconnect "+scanner.id+"\n")
+            scanner.last = datetime.datetime.now()
+
     def chooseTodo(self):
         if self.currTodo:
             return
@@ -149,10 +154,14 @@ class bluetoothScanner():
         self.ready = False
         self.commandFIFO = []
         while self.handle and self.alive:
+            time.sleep(0.1)
             now = datetime.datetime.now()
             if begin:
                 begin = False
                 self.pushCommand("power on\n")
+                self.pushCommand("agent on\n")
+                self.pushCommand("default-agent\n")
+                self.pushCommand("pairable on\n")
             elif self.startScan and (self.startScan < now):
                 self.startScan = None
                 self.pushCommand("scan off\n")
@@ -258,9 +267,8 @@ class bluetoothScanner():
                             elif pref == u"LegacyPairing:":
                                 if not self.currTodo.paired:
                                     self.toBePaired = self.currTodo
-                                    self.pushCommand("agent on\n")
-                                    self.pushCommand("default-agent\n")
-                                    self.pushCommand("pairable on\n")
+                                    if self.currTodo.connected:
+                                        self.pushCommand("disconnect "+self.currTodo.id+"\n")
                                     self.pushCommand("scan on\n")
                                     self.pushCommand("trust "+self.currTodo.id+"\n")
                                     self.pushCommand("pair "+self.currTodo.id+"\n")
@@ -270,6 +278,7 @@ class bluetoothScanner():
                                     self.pushCommand("unblock "+self.currTodo.id+"\n")
                                 elif not self.currTodo.connected:                                        
                                     self.pushCommand("connect "+self.currTodo.id+"\n")
+                                self.currTodo.last = datetime.datetime.now()
                                 self.currTodo = None
                             else:
                                 print "pref="+lineP[0]

@@ -109,13 +109,19 @@ def correctClock(remoteTime):
         except:
             traceback.print_exc()
 
+#Last battery measure
+lastBatt = 0.0
+
 #Data Configuration has to be retrieved localy or remotely...
 import Configuration
 c = Configuration.c
 c.barbaraConfig = barbaraConfiguration
 
 def networkSendBroadcast():
+
   global Alive
+  global stats_label
+
   s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
   s.bind(('', 0))
   s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
@@ -124,6 +130,10 @@ def networkSendBroadcast():
     statistics = str(c.AllTransactions.total_buyWithBrace)+"/"+str(c.AllTransactions.total_credit)
     message = barbaraConfiguration.applicationURL+'\t'+statistics+'\t'+compactNow()
     s.sendto(messageCRC(message)+'\t'+message+'\n', ('<broadcast>', barbaraConfiguration.broadcastPort))
+    try: # May fail if received too early...
+        stats_label.set(statistics)
+    except:
+        pass
     time.sleep(barbaraConfiguration.broadcastDelay)
 
 scannersLoaded = False
@@ -188,16 +198,19 @@ def networkReceiveBroadcast():
 
 c.load_local()
 
+# Local IP address
+localAddr = u""
+for ifaceName in netifaces.interfaces():
+  addresses = [anInterface['addr'] for anInterface in netifaces.ifaddresses(ifaceName).setdefault(netifaces.AF_INET, [{'addr':'No IP addr'}] )]
+  IP = ', '.join(addresses)
+  #print '%s: %s' % (ifaceName, str(IP))
+  if (ifaceName != 'lo'):
+    if (IP != 'No IP addr'):
+      localAddr = IP
+
 if barbaraConfiguration.applicationRole == 'c':
     c.load_remote()
     scannersLoaded = True
-    for ifaceName in netifaces.interfaces():
-      addresses = [anInterface['addr'] for anInterface in netifaces.ifaddresses(ifaceName).setdefault(netifaces.AF_INET, [{'addr':'No IP addr'}] )]
-      IP = ', '.join(addresses)
-      #print '%s: %s' % (ifaceName, str(IP))
-      if (ifaceName != 'lo'):
-        if (IP != 'No IP addr'):
-          localAddr = IP
     barbaraConfiguration.applicationURL = "http://"+unicode(localAddr)+":"+unicode(barbaraConfiguration.applicationPort)
 
     threadAPI = threading.Thread(target=c.startWebAPI)
@@ -1419,8 +1432,12 @@ class Contexte (): #threading.Thread
                         
             # pin
             self.pos_X = frame_width/2
-            t_pin = self.canevas.create_text(self.pos_X, self.pos_Y, text = self.scanner.fields['pin'], fill = color_debit,font = aFont(26))
+            t_pin = self.canevas.create_text(self.pos_X, self.pos_Y, text = (u"pin="+self.scanner.fields[u'pin']), fill = color_debit,font = aFont(26))
 
+            #saut de ligne
+            self.saut_de_ligne(40)  
+            self.pos_X = frame_width/2
+            t_deny = self.canevas.create_text(self.pos_X, self.pos_Y, text = (u"akuino"+self.scanner.fields[u'client']), fill = color_debit,font = aFont(30))
             #saut de ligne
             self.saut_de_ligne(40)  
             self.pos_X = frame_width/2
@@ -1507,7 +1524,7 @@ class Contexte (): #threading.Thread
             cell.grid(row = ligne, column = 2, pady=2)
             cell = Tkinter.Label(theGrid,text = unicode(total), fg = color_debit,bg = color_canevas,font = aFont(18))
             cell.grid(row = ligne, column = 4, pady=2)
-                    
+    
     def tk_stock(self,all_stock):
             self.ensure_tkdisplay()
 
@@ -1515,15 +1532,15 @@ class Contexte (): #threading.Thread
             theGrid.place(anchor=Tkinter.N, x=frame_width/2, y = 60)
 
             name_column = Tkinter.Label(theGrid,text = "PRODUITS", fg = color_header, bg = color_canevas,font = aFont(22))
-            name_column.grid(row = 0, column = 0,columnspan = 5, pady=4)
+            name_column.grid(row = 0, column = 0,columnspan = 6, pady=4)
             name_column = Tkinter.Label(theGrid,text = "Barcode", fg = color_header, bg = color_canevas,font = aFont(20))
-            name_column.grid(row = 1, column = 0, pady=2,padx=1)
+            name_column.grid(row = 1, column = 1, pady=2,padx=4)
             name_column = Tkinter.Label(theGrid,text = "Nom", fg = color_header, bg = color_canevas,font = aFont(20))
-            name_column.grid(row = 1, column = 1, pady=2,padx=1)
+            name_column.grid(row = 1, column = 2, pady=2,padx=4)
             name_column = Tkinter.Label(theGrid,text = "€/u", fg = color_header,bg = color_canevas,font = aFont(20))
-            name_column.grid(row = 1, column = 2, pady=2,padx=1)
+            name_column.grid(row = 1, column = 3, pady=2,padx=4)
             name_column = Tkinter.Label(theGrid,text = " Qty ", fg = color_header,bg = color_canevas,font = aFont(20))
-            name_column.grid(row = 1, column = 3, pady=2,padx=1)
+            name_column.grid(row = 1, column = 4, pady=2,padx=4)
       
             print "Votre Stock : "
             ligne = 5
@@ -1536,14 +1553,16 @@ class Contexte (): #threading.Thread
                 ligne += 1
                 print objet.fields['barcode'] + " " + objet.fields['name'] + " " + objet.fields['price'] + " " + objet.fields['qty']
                 
+                produit = Tkinter.Label(theGrid,text = " ABCDEFGHIJKL"[ligne-5], fg = color_header,bg = color_canevas,font = aFont(20))
+                produit.grid(row = ligne, column = 0, pady=2,padx=4)
                 produit = Tkinter.Label(theGrid,text = objet.fields['barcode'], fg = color_product,bg = color_canevas,font = aFont(16))
-                produit.grid(row = ligne, column = 0, pady=2)
+                produit.grid(row = ligne, column = 1, pady=2,padx=4)
                 produit = Tkinter.Label(theGrid,text = objet.fields['name'][:15], fg = color_header,bg = color_canevas,font = aFont(18))
-                produit.grid(row = ligne, column = 1, pady=2)
+                produit.grid(row = ligne, column = 2, pady=2,padx=4)
                 produit = Tkinter.Label(theGrid,text = objet.fields["price"], fg = color_debit,bg = color_canevas,font = aFont(18))
-                produit.grid(row = ligne, column = 2, pady=2)
+                produit.grid(row = ligne, column = 3, pady=2,padx=4)
                 produit = Tkinter.Label(theGrid,text = objet.fields["qty"], fg = color_message,bg = color_canevas,font = aFont(18))
-                produit.grid(row = ligne, column = 3, pady=2)
+                produit.grid(row = ligne, column = 4, pady=2,padx=4)
                     
     def tk_collaborateurs(self,all_collabs):
             self.ensure_tkdisplay()
@@ -1552,13 +1571,13 @@ class Contexte (): #threading.Thread
             theGrid.place(anchor=Tkinter.N, x=frame_width/2, y = 60)
 
             name_column = Tkinter.Label(theGrid,text = "COLLABS", fg = color_header, bg = color_canevas,font = aFont(22))
-            name_column.grid(row = 0, column = 0,columnspan = 4, pady=4)
+            name_column.grid(row = 0, column = 0,columnspan = 5, pady=4)
             name_column = Tkinter.Label(theGrid,text = "Barcode", fg = color_header, bg = color_canevas,font = aFont(20))
-            name_column.grid(row = 1, column = 0, pady=2,padx=1)
+            name_column.grid(row = 1, column = 1, pady=2,padx=4)
             name_column = Tkinter.Label(theGrid,text = "Nom", fg = color_header, bg = color_canevas,font = aFont(20))
-            name_column.grid(row = 1, column = 1, pady=2,padx=1)
+            name_column.grid(row = 1, column = 2, pady=2,padx=4)
             name_column = Tkinter.Label(theGrid,text = "Accès", fg = color_header,bg = color_canevas,font = aFont(20))
-            name_column.grid(row = 1, column = 2, pady=2,padx=1)
+            name_column.grid(row = 1, column = 3, pady=2,padx=4)
       
             print "Vos collaborateurs : "
             ligne = 5
@@ -1571,12 +1590,14 @@ class Contexte (): #threading.Thread
                 ligne += 1
                 print objet.fields['barcode'] + " " + objet.fields['name'] + " " + objet.fields['access']
                 
+                produit = Tkinter.Label(theGrid,text = " ABCDEFGHIJKL"[ligne-5], fg = color_header,bg = color_canevas,font = aFont(20))
+                produit.grid(row = ligne, column = 0, pady=2,padx=4)
                 produit = Tkinter.Label(theGrid,text = objet.fields['barcode'], fg = color_product,bg = color_canevas,font = aFont(16))
-                produit.grid(row = ligne, column = 0, pady=2)
+                produit.grid(row = ligne, column = 1, pady=2,padx=4)
                 produit = Tkinter.Label(theGrid,text = objet.fields['name'][:15], fg = color_header,bg = color_canevas,font = aFont(18))
-                produit.grid(row = ligne, column = 1, pady=2)
+                produit.grid(row = ligne, column = 2, pady=2,padx=4)
                 produit = Tkinter.Label(theGrid,text = objet.fields["access"], fg = color_debit,bg = color_canevas,font = aFont(18))
-                produit.grid(row = ligne, column = 2, pady=2)
+                produit.grid(row = ligne, column = 3, pady=2,padx=4)
         
     def tk_scanners(self,all_scans):
             self.ensure_tkdisplay()
@@ -1585,15 +1606,15 @@ class Contexte (): #threading.Thread
             theGrid.place(anchor=Tkinter.N, x=frame_width/2, y = 60)
 
             name_column = Tkinter.Label(theGrid,text = "SCANNERS", fg = color_header, bg = color_canevas,font = aFont(22))
-            name_column.grid(row = 0, column = 0,columnspan = 4, pady=4)
-            name_column = Tkinter.Label(theGrid,text = "Status", fg = color_header, bg = color_canevas,font = aFont(20))
-            name_column.grid(row = 1, column = 0, pady=2,padx=1)
+            name_column.grid(row = 0, column = 0,columnspan = 5, pady=4)
+            name_column = Tkinter.Label(theGrid,text = "akuino", fg = color_header, bg = color_canevas,font = aFont(20))
+            name_column.grid(row = 1, column = 1, pady=2,padx=4)
             name_column = Tkinter.Label(theGrid,text = "Nom", fg = color_header, bg = color_canevas,font = aFont(20))
-            name_column.grid(row = 1, column = 1, pady=2,padx=1)
+            name_column.grid(row = 1, column = 2, pady=2,padx=4)
             name_column = Tkinter.Label(theGrid,text = "PIN", fg = color_header,bg = color_canevas,font = aFont(20))
-            name_column.grid(row = 1, column = 2, pady=2,padx=1)
-            name_column = Tkinter.Label(theGrid,text = "MAC", fg = color_header, bg = color_canevas,font = aFont(20))
-            name_column.grid(row = 1, column = 3, pady=2,padx=1)
+            name_column.grid(row = 1, column = 3, pady=2,padx=4)
+            name_column = Tkinter.Label(theGrid,text = "MAC", fg = color_header, bg = color_canevas,font = aFont(18))
+            name_column.grid(row = 1, column = 4, pady=2,padx=4)
       
             print "Vos scanners : "
             ligne = 5
@@ -1606,14 +1627,16 @@ class Contexte (): #threading.Thread
                 ligne += 1
                 print objet.id + " " + objet.fields['name'] + " " + objet.fields['pin']
                 
-                produit = Tkinter.Label(theGrid,text = objet.strActive(), fg = color_debit,bg = color_canevas,font = aFont(18))
-                produit.grid(row = ligne, column = 0, pady=2)
-                produit = Tkinter.Label(theGrid,text = objet.fields['name'][:15], fg = color_header,bg = color_canevas,font = aFont(18))
-                produit.grid(row = ligne, column = 1, pady=2)
-                produit = Tkinter.Label(theGrid,text = objet.fields["pin"], fg = color_debit,bg = color_canevas,font = aFont(18))
-                produit.grid(row = ligne, column = 2, pady=2)
+                produit = Tkinter.Label(theGrid,text = " ABCDEFGHIJKL"[ligne-5], fg = color_header,bg = color_canevas,font = aFont(20))
+                produit.grid(row = ligne, column = 0, pady=2,padx=4)
+                produit = Tkinter.Label(theGrid,text = objet.fields[u"client"], fg = color_debit,bg = color_canevas,font = aFont(18))
+                produit.grid(row = ligne, column = 1, pady=2,padx=4)
+                produit = Tkinter.Label(theGrid,text = objet.fields[u'name'][:15], fg = color_header,bg = color_canevas,font = aFont(18))
+                produit.grid(row = ligne, column = 2, pady=2,padx=4)
+                produit = Tkinter.Label(theGrid,text = objet.fields[u"pin"], fg = color_debit,bg = color_canevas,font = aFont(18))
+                produit.grid(row = ligne, column = 3, pady=2,padx=4)
                 produit = Tkinter.Label(theGrid,text = objet.id, fg = color_product,bg = color_canevas,font = aFont(14))
-                produit.grid(row = ligne, column = 3, pady=2)
+                produit.grid(row = ligne, column = 4, pady=2,padx=4)
 
     def sauver_utilisateur(self):
         if not self.utilisateur:
@@ -1853,7 +1876,7 @@ class Contexte (): #threading.Thread
                             elif res == CB_Gestion:
                                 if self.user.allowed('g'):
                                     self.reinit(self.user, res)                    
-                                    ecran_message(self,0,u"!Commandes de configuration...")
+                                    ecran_message(self,0,u"!Commandes de configuration...",u"IP="+localAddr,u"Batt.="+unicode(lastBatt)+u"V")
                             elif res == CB_Scanners:
                                 if self.user.allowed('g'):
                                     self.reinit(self.user, res)                    
@@ -2015,7 +2038,7 @@ class Contexte (): #threading.Thread
                                 self.scanner = self.syncChoix(aChoice,c.AllScanners.elements)
                                 if self.scanner:
                                     self.nom_choisi = self.scanner.fields[u"name"]
-                                    self.setQty(self.scanner.fields[u"pin"])
+                                    self.setQty(self.scanner.fields[u"client"])
                                     ecran_scanner(self)
                             return True
         except :
@@ -2067,7 +2090,7 @@ class Contexte (): #threading.Thread
             #print (res+"=>"+ (unicode(currObject) if currObject!=None else "None") )             
 
             if currObject == None:
-                ecran_message(self,0,u"!Code barre inconnu",u"ou",u"!Erreur du Réseau")
+                ecran_message(self,0,res+u":",u"!Code barre inconnu",u"ou",u"!Erreur du Réseau")
                 return
             elif isinstance(currObject,Configuration.User):
                 if self.user and (self.mode == CB_Collabs):
@@ -2425,6 +2448,8 @@ def InputListThread():
                 else:
                     if currScanner.reader:
                         currScanner.reader.Alive = False
+                    if currScanner.connected and (currScanner.last+datetime.timedelta(seconds=30)) < datetime.datetime.now():
+                        bluetooth.addDisconnect(currScanner)
                 if currScanner.isActive() and not currScanner.connected:
                     bluetooth.addTodo(currScanner)
             if somethingDisplayed:
@@ -2515,6 +2540,11 @@ def SHUT_NOW(contexte):
     os.system(hardConf.battery_shutdown)
 
 def tension():
+
+    global Alive
+    global stats_label
+    global lastBatt
+
     if hardConf.battery:
         try:
                 if hardConf.battery == 'I2C':
@@ -2527,8 +2557,6 @@ def tension():
                     # set the reference voltage.  this should be set to the exact voltage
                     # measured on the raspberry pi 3.3V rail.
                     bus_pi.set_adc_refvoltage(3.3)
-
-                global Alive
         
                 while Alive:
                                     
@@ -2565,8 +2593,10 @@ def tension():
                         print ("Sous tension: "+unicode(tens))
                         pass
                     else:
+                        lastBatt = tens
                         if tens <= hardConf.battery_breakout_volt:
-                            print (tens,"V lower than "+unicode(hardConf.battery_breakout_volt)+"...")
+                            stats_label.set(unicode(tens)+u"V : ATTENTION")
+                            print (tens+"V lower than "+unicode(hardConf.battery_breakout_volt)+"...")
                             time.sleep(5)
                             if hardConf.battery == 'I2C':
                                 bus_pi.write_byte(hardConf.battery_address,ADCconf)
@@ -2585,7 +2615,8 @@ def tension():
                             tens= tens*hardConf.battery_divider
                             tens = round(tens, 2)
                             if tens < hardConf.battery_breakout_volt:
-                                print(tens,"V : Shutdown...")
+                                stats_label.set(unicode(tens)+u"V : HALTE DU SYSTEME")
+                                print(tens+"V : Shutdown...")
                                 SHUT_NOW(None)
                         else:  
                             print 'Sensor battery: '+unicode(tens)+' V'
