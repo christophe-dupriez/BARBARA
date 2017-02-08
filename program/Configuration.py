@@ -204,10 +204,10 @@ class Configuration(object):
                 return None
         return None
 
-    def client_SaveObjectFields(self,anObject):
+    def client_SaveObjectFields(self,anObject,allObjects):
         to_protect = jsonpickle.encode(anObject.fields)
         protect_crc = zlib.crc32(str(anObject.id)+u"/"+to_protect)
-        response = requests.post(self.barbaraConfig.applicationURL+u'/save/'+str(anObject.id)+u"/"+unicode(protect_crc), data=to_protect)
+        response = requests.post(self.barbaraConfig.applicationURL+u'/save/'+allObjects.id+u'/'+str(anObject.id)+u"/"+unicode(protect_crc), data=to_protect)
 
         if response.status_code == 200:
             try:
@@ -301,7 +301,7 @@ class ConfigurationObject(object):
                 writer = unicodecsv.DictWriter(csvfile, delimiter = '\t', fieldnames=allObjects.fieldnames, encoding="utf-8")
                 writer.writerow(self.fields)
         else:
-            configuration.client_SaveObjectFields(self)
+            configuration.client_SaveObjectFields(self,allObjects)
         return self
 
     def strActive(self):
