@@ -226,6 +226,12 @@ else: # Local Data
     c.load_remote()
     scannersLoaded = True
 
+# Ensure a User BARBARA
+    aRow = c.AllUsers.default_row(CB_User_BARBARA)
+    aRow[u'access'] = u"g"
+    aRow[u'name'] = u"BARBARA"
+    c.AllUsers.assignObject(CB_User_BARBARA,aRow)
+
 PIG = pigpio.pi()
 if hardConf.running:
     PIG.set_mode(hardConf.running, pigpio.OUTPUT)
@@ -281,6 +287,7 @@ def setMessages(modes):
     
 # MODES 
 CB_User_Cancel =  "1000000010077"
+CB_User_BARBARA =  "100000001012?" #TODO Bon barcode....
 CB_Vente_Bracelets = "1000000010039"
 CB_Vente_Produits = "1000000010053"
 CB_Stock = "1000000010114"
@@ -1853,6 +1860,9 @@ class Contexte (): #threading.Thread
                     if res in modes :                    # il faudra tester si l'utilisateur peut accéder à ce mode
                         
                         if res == CB_User_Cancel :
+                            self.reinit(None)
+                            ecran_message(self,0,u"!Veuillez vous identifier")
+                        elif res == CB_User_BARBARA :
                             self.reinit(None)
                             ecran_message(self,0,u"!Veuillez vous identifier")
                         else:
