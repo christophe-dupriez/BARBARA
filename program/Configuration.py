@@ -381,17 +381,6 @@ class AllObjects(object):
     def defaultRow(self,key):
         return None
 
-    def emptyObject(self,barkey):
-        if barkey not in self.config.barcode:
-            currObject = self.newObject()
-            self.config.barcode[barkey] = currObject
-            currObject.id = barkey
-            self.elements[barkey] = currObject
-        else:
-            print u"Error : key already used " + barkey
-            currObject = self.config.barcode[barkey]
-        return currObject
-
     def createObject(self,key,row):
         currObject = self.newObject()
         currObject.fields = row
@@ -431,7 +420,8 @@ class AllObjects(object):
                     data = response.json()
                     if data:
                         for barkey in data:
-                            self.emptyObject(self.barkey)
+                            self.assignObject(barkey,None)
+                            self.refresh(barkey)
                 except:
                     traceback.print_exc()
         return self.elements
@@ -440,7 +430,7 @@ class AllObjects(object):
         obj = self.elements[id]
         if obj == None:
             return None
-        return obj.refreshed(self.config.barbaraConfig)
+        return obj.refreshed(self.config)
 
     def generateBarcode(self):
         global lastGenerate
