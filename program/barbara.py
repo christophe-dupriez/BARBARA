@@ -217,10 +217,12 @@ if barbaraConfiguration.applicationRole == 'c':
     threadAPI.start()
 
     threadBROADCAST = threading.Thread(target=networkSendBroadcast)
+    threadBROADCAST.daemon = True
     threadBROADCAST.start()
 
 elif barbaraConfiguration.applicationRole == 'b':
     threadBROADCAST = threading.Thread(target=networkReceiveBroadcast)
+    threadBROADCAST.daemon = True
     threadBROADCAST.start()
 else: # Local Data
     c.load_remote()
@@ -2481,6 +2483,7 @@ def InputListThread():
       time.sleep(0.1) # TODO: was 2 !            
 
 threadList = threading.Thread(target=InputListThread)
+threadList.daemon = True
 threadList.start()
 
 ADCconf = 0x98+hardConf.battery_port
@@ -2635,6 +2638,7 @@ def tension():
                 traceback.print_exc()
                     
 threadADC = threading.Thread(target=tension)
+threadADC.daemon = True
 threadADC.start()
 
 
@@ -2675,6 +2679,7 @@ def keypadCheck():
         time.sleep(0.05)
 
 threadKEYS = threading.Thread(target=keypadCheck)
+threadKEYS.daemon = True
 threadKEYS.start()
 
 def configPanel(event):
@@ -2712,9 +2717,9 @@ except:
 
 Alive = False
 bluetooth.alive = False
-time.sleep(0.2)
+time.sleep(0.5)
 threadList.join()
-time.sleep(0.2)
+time.sleep(0.5)
 #if hardConf.running:
 #    PIG.write(hardConf.running, 0)
 PIG.stop()

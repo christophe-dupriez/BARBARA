@@ -382,13 +382,14 @@ class AllObjects(object):
         return None
 
     def emptyObject(self,barkey):
-        currObject = self.newObject()
-        currObject.id = barkey
-        self.elements[barkey] = currObject
         if barkey not in self.config.barcode:
+            currObject = self.newObject()
             self.config.barcode[barkey] = currObject
+            currObject.id = barkey
+            self.elements[barkey] = currObject
         else:
             print u"Error : key already used " + barkey
+            currObject = self.config.barcode[barkey]
         return currObject
 
     def createObject(self,key,row):
@@ -430,7 +431,7 @@ class AllObjects(object):
                     data = response.json()
                     if data:
                         for barkey in data:
-                            emptyObject(self.barkey)
+                            self.emptyObject(self.barkey)
                 except:
                     traceback.print_exc()
         return self.elements
@@ -981,7 +982,7 @@ class SaveConfigurationObject(app.page):
 
     def POST(self, objectId, checksum):
         web.header('Content-Type', u'application/json')
-        protect_crc = zlib.crc32(userId+u"/"+objectId+u"/"+web.data())
+        protect_crc = zlib.crc32(objectId+u"/"+web.data())
         if checksum != unicode(protect_crc):
             return u""
         fieldsReceived = None

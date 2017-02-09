@@ -309,6 +309,7 @@ class bluetoothScanner():
     
     def start(self):
         thread = threading.Thread(target=self.control)
+        thread.daemon = True
         thread.start()
         time.sleep(1.0)
         thread2 = threading.Thread(target=self.enqueue)

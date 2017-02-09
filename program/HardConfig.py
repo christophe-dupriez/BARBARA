@@ -36,7 +36,7 @@ class HardConfig():
     battery_RV = 45000
     battery_RG = 5000
     battery_divider = 10.0
-    battery_shutdown = 'sudo shutdown +1 "ON FERME!"'
+    battery_shutdown = 'sudo shutdown now "ON FERME!"'
     shutdown = None
     running = None
     keypad = None
