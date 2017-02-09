@@ -245,7 +245,7 @@ MAC_USB_Scanner =  "AFANDBARCODE"
 if not MAC_USB_Scanner in c.AllScanners.elements:
     aRow = c.AllScanners.defaultRow(MAC_USB_Scanner)
     aRow[u'client'] = c.barbaraConfig.akuinoHost
-    c.Scanners.assignObject(MAC_USB_Scanner,aRow)
+    c.AllScanners.assignObject(MAC_USB_Scanner,aRow)
 
 PIG = pigpio.pi()
 if hardConf.running:
@@ -1970,6 +1970,11 @@ class Contexte (): #threading.Thread
                             elif self.mode == CB_Scanners:
                                 #TODO Détruire tous les DENY et refaire un SCAN complet du réseau Bluetooth pour creer des Scanners "denied"
                                 pass
+                            elif self.mode == CB_Gestion:
+                                if exec_command(self,["git","-C","..","pull"]):
+                                    ecran_message(self,0,u"!BARBARA est",u"!mise à jour.",u"Redémarrer pour",u"bénéficier des",u"améliorations")
+                                else:
+                                    ecran_message(self,0,u"!ERREUR à la mise à jour",u"!de BARBARA.")
                         elif action == CB_Precedent:
                             self.debut -=  TAILLE_ECRAN
                             if self.mode == CB_Vente_Produits:

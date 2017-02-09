@@ -120,7 +120,7 @@ class bluetoothScanner():
     def addTodo(self,scanner):
         if scanner in self.todo:
             pass
-        else:
+        elif scanner.id != "AFANDBARCODE":
             self.todo[scanner] = '!'
 
     def addDisconnect(self,scanner):
