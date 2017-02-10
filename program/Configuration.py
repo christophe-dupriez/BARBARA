@@ -1000,8 +1000,9 @@ class GenerateConfigurationObject(app.page):
 
     def GET(self):
         web.header('Content-Type', u'application/json;charset=utf-8')
-        if objectId in self.allObjects.elements:
-            return jsonpickle.encode(self.allObjects.elements[objectId])
+        generated = self.allObjects.generateBarcode()
+        if generated:
+            return jsonpickle.encode(generated)
         else:
             return u""
 
@@ -1018,15 +1019,18 @@ class getBarcodeObject(app.page):
 
 class list_users(ListConfigurationObject):
     allObjects = c.AllUsers
+    path = u'/users/list'
     
 class get_user(GetConfigurationObject):
     allObjects = c.AllUsers
     
 class generate_user(GenerateConfigurationObject):
     allObjects = c.AllUsers
+    path = u'/users/generate'
     
 class save_user(SaveConfigurationObject):
     allObjects = c.AllUsers
+    path = u'/save/user/(.*)/(.*)'
     
 class print_users(app.page):
     path = u'/users/print'
@@ -1098,6 +1102,8 @@ class buy_withbrace(app.page):
 
 class list_braces(ListConfigurationObject):
     allObjects = c.AllBraces
+    path = u'/braces/list'
+    
     
 class print_braces_code(app.page):
     path = u'/braces/printcode'
@@ -1135,12 +1141,15 @@ class get_brace(GetConfigurationObject):
     
 class save_brace(SaveConfigurationObject):
     allObjects = c.AllBraces
+    path = u'/save/brace/(.*)/(.*)'
     
 class generate_brace(GenerateConfigurationObject):
     allObjects = c.AllBraces
+    path = u'/braces/generate'
     
 class list_products(ListConfigurationObject):
     allObjects = c.AllProducts
+    path = u'/products/list'
     
 class print_products(app.page):
     path = u'/products/print'
@@ -1183,9 +1192,11 @@ class get_product(GetConfigurationObject):
 
 class save_product(SaveConfigurationObject):
     allObjects = c.AllProducts
+    path = u'/save/product/(.*)/(.*)'
     
 class generate_product(GenerateConfigurationObject):
     allObjects = c.AllProducts
+    path = u'/products/generate'
     
 class list_scanners(ListConfigurationObject):
     allObjects = c.AllScanners
@@ -1208,6 +1219,7 @@ class save_scanner(SaveConfigurationObject):
     
 class generate_scanner(GenerateConfigurationObject):
     allObjects = c.AllScanners
+    path = u'/scanners/generate'
     
 class print_config(app.page):
     path = u'/config/print'
