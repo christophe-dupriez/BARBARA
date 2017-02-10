@@ -783,11 +783,16 @@ def generer_bracelet(contexte):
     ##            filename = ean.save("/var/akuino/"+codeBarre)
     ##            print(os.system("lpr -o media=Custom.28x292mm -o fit-to-page -o position=bottom "+filename)) # -r to keep /var tidy !
     #            if linePrinter(contexte,codeBarre,"DIRECTION 0\r\nBLINE 3 mm,-18 mm\r\nSIZE 24 mm,80 mm\r\nCLS\r\nTEXT 180,20,\"2\",90,1,1,\"BARBARA\"\r\nBARCODE 145,20,\"EAN13\",100,1,90,4,4,\""+codeBarre+"\"\r\nPRINT 1\r\n"):
-
+            else:
+                ecran_message(contexte,0,u"Imprimante",u"pas disponible?")
+        else:
+            ecran_message(contexte,0,u"Plus de bracelets définis",u"pour l'impression.")
+    else:
+        ecran_message(contexte,0,u"Imprimante",u"pas configuree?")
     if printedBrace:
         ecran_client(contexte)
     else:
-        ecran_message(contexte,0,u"Plus de bracelets définis",u"pour l'impression.",u"!Contactez votre installateur.")
+        ecran_message(contexte,0,u"!Contactez votre installateur.")
 
 # Affichage de l'ecran et surtout impression d'un bracelet
 def generer_produit(contexte):
@@ -2474,7 +2479,7 @@ def InputListThread():
                 else:
                     if currScanner.reader:
                         currScanner.reader.Alive = False
-                    if currScanner.connected and (currScanner.last+datetime.timedelta(seconds=30)) < datetime.datetime.now():
+                    if currScanner.connected and (not currScanner.last or ((currScanner.last+datetime.timedelta(seconds=30)) < datetime.datetime.now()) ):
                         bluetooth.addDisconnect(currScanner)
                 if currScanner.isActive() and not currScanner.connected:
                     bluetooth.addTodo(currScanner)
