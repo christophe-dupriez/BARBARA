@@ -176,7 +176,10 @@ class Configuration(object):
                 if data:
                     return self.storeObject(data)
             except:
+                traceback.print_exc()
                 return None
+        else:
+            print u"Get barcode "+barcode+u" HTTP error="+unicode(response.status_code)
         return None
 
     def ensureBarcode(self,res):
@@ -201,7 +204,10 @@ class Configuration(object):
                 if data:
                     return self.storeObject(data)
             except:
+                traceback.print_exc()
                 return None
+        else:
+            print u"Get object "+key+u" HTTP error="+unicode(response.status_code)
         return None
 
     def client_SaveObjectFields(self,anObject,allObjects):
@@ -215,7 +221,10 @@ class Configuration(object):
                 if data:
                     return data[u'fields']
             except:
+                traceback.print_exc()
                 return None
+        else:
+            print "Save object HTTP error="+unicode(response.status_code)
         return None
 
     def client_ReserveBrace(self,forUser):#TODO PAS JUSTE!!!
@@ -227,7 +236,10 @@ class Configuration(object):
                 if data:
                     return self.storeObject(data)
             except:
+                traceback.print_exc()
                 return None
+        else:
+            print "Reserve Brace HTTP error="+unicode(response.status_code)
         return None
 
     def client_CreditBrace(self,userid,barcode,amount):
@@ -265,7 +277,10 @@ class Configuration(object):
                 if data:
                     return self.storeObject(data)
             except:
+                traceback.print_exc()
                 return None
+        else:
+            print "Buy using a Brace HTTP error="+unicode(response.status_code)
         return None
 
     def htmlNow(self):
@@ -424,6 +439,9 @@ class AllObjects(object):
                             self.refresh(barkey)
                 except:
                     traceback.print_exc()
+                traceback.print_exc()
+            else:
+                print "Elements refresh HTTP error="+unicode(response.status_code)
         return self.elements
 
     def refresh(self,id):
@@ -442,11 +460,13 @@ class AllObjects(object):
                 try:
                     data = response.json()
                     if data:
-                        obj = self.storeObject(data)
+                        obj = self.config.storeObject(data)
                         return obj
                 except:
+                    traceback.print_exc()
                     return None
             else:
+                print "Generate HTTP error="+unicode(esponse.status_code)
                 return None
 
         else:
@@ -722,6 +742,8 @@ class AllScanners(AllObjects):
                         currObject.reader = None                        
             except:
                 traceback.print_exc()
+        else:
+            print "Load remote HTTP error="+unicode(response.status_code)
 
     def newObject(self):
         return Scanner()
@@ -1089,7 +1111,11 @@ class buy_withbrace(app.page):
                     for line in basketLines:
                         if line:
                             productData = line.split('*')
-                            basketDic[productData[0]] = productData[1]
+                            if productData[0] in c.AllProducst.elements:
+                                aProduct = c.AllProducst.elements[productData[0]]
+                                basketDic[aProduct] = productData[1]
+                            else:
+                                print productData[0]+u" is not known as a Product"
                     c.AllTransactions.buyWithBrace(aUser,aBrace,amount,basketDic)
 
                     return jsonpickle.encode(aBrace)
