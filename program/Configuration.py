@@ -604,6 +604,7 @@ class Transaction (ConfigurationObject):
         with open(baseDir+config.AllTransactions.filename,"a") as csvfile:
             writer = unicodecsv.DictWriter(csvfile, delimiter = '\t', fieldnames=config.AllTransactions.fieldnames, encoding="utf-8")
             writer.writerow(self.fields)
+            print unicode(self.fields)
 
     def make_buyWithBrace(self,config,aUser,aBrace,amount):
         self.fields = { u"time":unicode(datetime.datetime.now()), u"type":"B", u"user":aUser.id, u"brace":aBrace.id, u"amount":unicode(amount), u"product":"", u"qty":"" }
