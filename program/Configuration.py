@@ -1111,7 +1111,7 @@ class buy_withbrace(app.page):
                     for line in basketLines:
                         if line:
                             productData = line.split('*')
-                            if productData[0] in c.AllProducst.elements:
+                            if productData[0] in c.AllProducts.elements:
                                 aProduct = c.AllProducst.elements[productData[0]]
                                 basketDic[aProduct] = productData[1]
                             else:
