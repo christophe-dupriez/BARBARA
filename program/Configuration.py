@@ -1112,7 +1112,7 @@ class buy_withbrace(app.page):
                         if line:
                             productData = line.split('*')
                             if productData[0] in c.AllProducts.elements:
-                                aProduct = c.AllProducst.elements[productData[0]]
+                                aProduct = c.AllProducts.elements[productData[0]]
                                 basketDic[aProduct] = productData[1]
                             else:
                                 print productData[0]+u" is not known as a Product"
