@@ -828,7 +828,7 @@ def generer_utilisateur(contexte):
                 contexte.utilisateur = printedBrace
 
     if printedBrace:
-        contexte.nom_choisi = contexte.utilisateur.fields[u"name"]
+        contexte.nom_choisi = contexte.utilisateur.fields["name"]
         contexte.setQty(contexte.utilisateur.getAccessCode())
         ecran_utilisateur(contexte)
     else:
@@ -1081,7 +1081,7 @@ class Contexte (): #threading.Thread
         p_x = tile_width * (self.rank % 3)
         p_y = tile_height * int(self.rank / 3)
 
-        self.window = Tkinter.LabelFrame (tkdisplay_root, text = unicode(self.rank)+'#'+(unicode(self.currScanner.id)+'#'+unicode(self.currScanner.fields[u"name"])) if self.currScanner else u"", borderwidth = 2, labelanchor = 'n', bg = color_window,fg = "white")
+        self.window = Tkinter.LabelFrame (tkdisplay_root, text = unicode(self.rank)+'#'+(unicode(self.currScanner.id)+'#'+unicode(self.currScanner.fields["name"])) if self.currScanner else u"", borderwidth = 2, labelanchor = 'n', bg = color_window,fg = "white")
         self.window.place(height = tile_height, width = tile_width, x=p_x, y=p_y )
         self.l_frame = self.window
 
@@ -1138,7 +1138,7 @@ class Contexte (): #threading.Thread
             self.canevas.delete(self.t_qty_nbre)
         else:
             # was self.rank
-            t_number = Tkinter.Label(self.canevas, text = self.currScanner.fields[u"name"] ,background = "yellow", foreground = 'black', font = aFont(26))
+            t_number = Tkinter.Label(self.canevas, text = self.currScanner.fields["name"] ,background = "yellow", foreground = 'black', font = aFont(26))
             t_number.place(anchor=Tkinter.SE, x = frame_width, y = frame_height) #positionnement
             
         self.t_qty_nbre = self.canevas.create_text(self.pos_X, self.pos_Y-4, anchor = 'nw', fill = color_debit, font = aFont(26))
@@ -1464,12 +1464,12 @@ class Contexte (): #threading.Thread
                         
             # pin
             self.pos_X = frame_width/2
-            t_pin = self.canevas.create_text(self.pos_X, self.pos_Y, text = (u"pin="+self.scanner.fields[u'pin']), fill = color_debit,font = aFont(26))
+            t_pin = self.canevas.create_text(self.pos_X, self.pos_Y, text = (u"pin="+self.scanner.fields['pin']), fill = color_debit,font = aFont(26))
 
             #saut de ligne
             self.saut_de_ligne(40)  
             self.pos_X = frame_width/2
-            t_deny = self.canevas.create_text(self.pos_X, self.pos_Y, text = (u"akuino"+self.scanner.fields[u'client']), fill = color_debit,font = aFont(30))
+            t_deny = self.canevas.create_text(self.pos_X, self.pos_Y, text = (u"akuino"+self.scanner.fields['client']), fill = color_debit,font = aFont(30))
             #saut de ligne
             self.saut_de_ligne(40)  
             self.pos_X = frame_width/2
@@ -1661,11 +1661,11 @@ class Contexte (): #threading.Thread
                 
                 produit = Tkinter.Label(theGrid,text = " ABCDEFGHIJKL"[ligne-5], fg = color_header,bg = color_canevas,font = aFont(20))
                 produit.grid(row = ligne, column = 0, pady=2,padx=4)
-                produit = Tkinter.Label(theGrid,text = objet.fields[u"client"], fg = color_debit,bg = color_canevas,font = aFont(18))
+                produit = Tkinter.Label(theGrid,text = objet.fields["client"], fg = color_debit,bg = color_canevas,font = aFont(18))
                 produit.grid(row = ligne, column = 1, pady=2,padx=4)
-                produit = Tkinter.Label(theGrid,text = objet.fields[u'name'][:15], fg = color_header,bg = color_canevas,font = aFont(18))
+                produit = Tkinter.Label(theGrid,text = objet.fields['name'][:15], fg = color_header,bg = color_canevas,font = aFont(18))
                 produit.grid(row = ligne, column = 2, pady=2,padx=4)
-                produit = Tkinter.Label(theGrid,text = objet.fields[u"pin"], fg = color_debit,bg = color_canevas,font = aFont(18))
+                produit = Tkinter.Label(theGrid,text = objet.fields["pin"], fg = color_debit,bg = color_canevas,font = aFont(18))
                 produit.grid(row = ligne, column = 3, pady=2,padx=4)
                 produit = Tkinter.Label(theGrid,text = objet.id, fg = color_product,bg = color_canevas,font = aFont(14))
                 produit.grid(row = ligne, column = 4, pady=2,padx=4)
@@ -1673,7 +1673,7 @@ class Contexte (): #threading.Thread
     def sauver_utilisateur(self):
         if not self.utilisateur:
             return False
-        self.utilisateur.fields[u"name"] = self.nom_choisi
+        self.utilisateur.fields["name"] = self.nom_choisi
         if self.qty_choisie and self.qty_choisie >= 0:
             self.utilisateur.setAccessCode(self.qty_choisie)
         self.utilisateur.save(c,self.user)
@@ -1682,25 +1682,25 @@ class Contexte (): #threading.Thread
     def sauver_produit(self,deny):
         if not self.produit:
             return False
-        self.produit.fields[u"name"] = self.nom_choisi
+        self.produit.fields["name"] = self.nom_choisi
         if self.qty_choisie and self.qty_choisie >= 0:
             self.produit.setCents(self.qty_choisie)
         if deny:
-            self.produit.fields[u"deny"] = ""
+            self.produit.fields["deny"] = ""
         else:
-            self.produit.fields[u"deny"] = "1"
+            self.produit.fields["deny"] = "1"
         self.produit.save(c,self.user)
         return True
 
     def sauver_scanner(self,destinationHote):
         if not self.scanner:
             return False
-        self.scanner.fields[u"name"] = self.nom_choisi
+        self.scanner.fields["name"] = self.nom_choisi
         if self.qty_choisie and self.qty_choisie >= 0:
             if destinationHote:
-                self.scanner.fields[u"client"] = unicode(self.qty_choisie)
+                self.scanner.fields["client"] = unicode(self.qty_choisie)
             else:
-                self.scanner.fields[u"pin"] = unicode(self.qty_choisie)
+                self.scanner.fields["pin"] = unicode(self.qty_choisie)
         self.scanner.save(c,self.user)
         return True
 
@@ -2028,6 +2028,7 @@ class Contexte (): #threading.Thread
                                 print "Paiement CASH"
                                 if self.ajouter_argent():
                                     ecran_vente_bracelets(self,False)
+                                    self.qty_choisie = -1
                                 else:
                                     ecran_message(self,0,u"!Problème de réseau?",u"Transaction annulée")
                                     self.partial_init()
@@ -2057,6 +2058,7 @@ class Contexte (): #threading.Thread
                                 if self.debiter_carte():  # TODO                            
                                     if self.ajouter_argent():
                                         ecran_vente_bracelets(self,False)
+                                        self.qty_choisie = -1
                                     else:
                                         ecran_message(self,0,u"!Problème de réseau?",u"Transaction annulée")
                                         self.partial_init()
@@ -2079,20 +2081,20 @@ class Contexte (): #threading.Thread
                             if self.mode == CB_Stock:
                                 self.produit = self.syncChoix(aChoice,c.AllProducts.elements)
                                 if self.produit:
-                                    self.nom_choisi = self.produit.fields[u"name"]
+                                    self.nom_choisi = self.produit.fields["name"]
                                     self.setQty(self.produit.getCents())
                                     ecran_produit(self)
                             elif self.mode == CB_Collabs:
                                 self.utilisateur = self.syncChoix(aChoice,c.AllUsers.elements)
                                 if self.utilisateur:
-                                    self.nom_choisi = self.utilisateur.fields[u"name"]
+                                    self.nom_choisi = self.utilisateur.fields["name"]
                                     self.setQty(self.utilisateur.getAccessCode())
                                     ecran_utilisateur(self)
                             elif self.mode == CB_Scanners:
                                 self.scanner = self.syncChoix(aChoice,c.AllScanners.elements)
                                 if self.scanner:
-                                    self.nom_choisi = self.scanner.fields[u"name"]
-                                    self.setQty(self.scanner.fields[u"client"])
+                                    self.nom_choisi = self.scanner.fields["name"]
+                                    self.setQty(self.scanner.fields["client"])
                                     ecran_scanner(self)
                             return True
         except :
@@ -2112,7 +2114,7 @@ class Contexte (): #threading.Thread
                     if self.produit == None:
                         ecran_message(self,0,u"!Code-barre",res,u"!déjà utilisé.")
                     else:
-                        self.nom_choisi = self.produit.fields[u"name"]
+                        self.nom_choisi = self.produit.fields["name"]
                         self.setQty(self.produit.getCents())
                         ecran_produit(self)
                 elif self.mode == CB_Collabs:
@@ -2120,7 +2122,7 @@ class Contexte (): #threading.Thread
                     if self.utilisateur == None:
                         ecran_message(self,0,u"!Code-barre",res,u"!déjà utilisé.")
                     else:
-                        self.nom_choisi = self.utilisateur.fields[u"name"]
+                        self.nom_choisi = self.utilisateur.fields["name"]
                         self.setQty(self.utilisateur.getAccessCode())
                         ecran_utilisateur(self)
                 elif self.mode == CB_Vente_Bracelets:
@@ -2149,7 +2151,7 @@ class Contexte (): #threading.Thread
             elif isinstance(currObject,Configuration.User):
                 if self.user and (self.mode == CB_Collabs):
                     self.utilisateur = currObject
-                    self.nom_choisi = self.utilisateur.fields[u"name"]
+                    self.nom_choisi = self.utilisateur.fields["name"]
                     self.setQty(self.utilisateur.getAccessCode())
                     ecran_utilisateur(self)
                     return
@@ -2225,7 +2227,7 @@ class Contexte (): #threading.Thread
 
                 if self.mode == CB_Stock :
                     ecran_produit(self)
-                    self.nom_choisi = self.produit.fields[u"name"]
+                    self.nom_choisi = self.produit.fields["name"]
                     self.setQty(self.produit.getCents())
 
                     
@@ -2589,6 +2591,7 @@ class ADCDACPi:
 
 def SHUT_NOW(contexte):
     global Alive
+    global bluetooth
     if contexte:
         ecran_message(contexte,0,"!ON FERME TOUT!")
     Alive = False
