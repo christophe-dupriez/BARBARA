@@ -1070,20 +1070,26 @@ class credit_brace(app.page):
         web.header('Content-Type', u'application/json;charset=utf-8')
         protect_crc = zlib.crc32(userId+u"/"+braceId+u"/"+amount)
         if checksum != unicode(protect_crc):
+            print(checksum+u": checksum should be "+unicode(protect_crc))
             return u""
         if userId and userId in c.AllUsers.elements:
             try:
                 aUser =  c.AllUsers.elements[userId]
                 amount = infloat(amount)
-                if braceId in c.AllBraces.elements:
-                    aBrace = c.AllBraces.elements[braceId]
-                    c.AllTransactions.credit(aUser,aBrace,amount)
-                    return jsonpickle.encode(aBrace)
+                if not braceId in c.AllBraces.elements:
+                    print(braceId+u": brace does not exist?")
+                    aRow = c.AllBraces.defaultRow(braceId)
+                    aRow['sold'] = u"yes"
+                    aBrace = c.AllBraces.assignObject(braceId,aRow)
                 else:
-                    print(braceId+u" does not exist?")
+                    aBrace = c.AllBraces.elements[braceId]
+                c.AllTransactions.credit(aUser,aBrace,amount)
+                return jsonpickle.encode(aBrace)
             except:
                 print(braceId+u"+u"+unicode(amount))
                 traceback.print_exc()
+        else:
+            print(userId+u": user does not exist?")
         return u""
 
 # Debiter un bracelet (achat)
