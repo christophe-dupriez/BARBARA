@@ -234,8 +234,8 @@ CB_User_BARBARA =  "1000000010121"
 
 if not CB_User_BARBARA in c.AllUsers.elements:
     aRow = c.AllUsers.defaultRow(CB_User_BARBARA)
-    aRow[u'access'] = u"g"
-    aRow[u'name'] = u"BARBARA"
+    aRow['access'] = u"g"
+    aRow['name'] = u"BARBARA"
     c.AllUsers.assignObject(CB_User_BARBARA,aRow)
 
 # Ensure a USB Scanner
@@ -2569,6 +2569,8 @@ def SHUT_NOW(contexte):
     if contexte:
         ecran_message(contexte,0,"!ON FERME TOUT!")
     Alive = False
+    bluetooth.alive = False
+    time.sleep(2.5)
     os.system(hardConf.battery_shutdown)
 
 def tension():
