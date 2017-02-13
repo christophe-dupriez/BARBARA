@@ -531,7 +531,8 @@ class AllTransactions(AllObjects):
                     aProduct = None
                     barkey = row[u"product"]
                     if barkey:
-                        aProduct = self.config.AllProducts.assignObject(barkey, { u"barcode":barkey,"name":"product#"+barkey,"price":unicode(amount/qty),"qty":"" } )
+                        if qty > 0.0:
+                            aProduct = self.config.AllProducts.assignObject(barkey, { u"barcode":barkey,"name":"product#"+barkey,"price":unicode(amount/qty),"qty":"" } )
 
                     if row[u"type"] == u"C": #Credit or Debit of a Brace
                         if aBrace:
