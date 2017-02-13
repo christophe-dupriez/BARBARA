@@ -967,6 +967,16 @@ class Scanner(ConfigurationObject):
             else:
                 return "nok"
 
+    def refreshed(self,configuration):
+        if configuration.barbaraConfig.applicationRole == u'b':
+            allObjects = configuration.findAllFromObject(self)
+            if allObjects.local:
+                return self
+            else:
+                return configuration.client_GetObject(allScanners,self.id)
+        else:
+            return self
+
 #### WEB server API ####
 class ListConfigurationObject(app.page):
     allObjects = c.AllUsers
