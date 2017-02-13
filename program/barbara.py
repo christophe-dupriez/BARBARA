@@ -1029,8 +1029,8 @@ allContexte = { }
 class Contexte (): #threading.Thread
 
     startRes = None
-    pref_qty = u"€"
-    pref_nom = u"Nom"
+    pref_qty = u"€ "
+    pref_nom = u"Nom:"
         
 
     def partial_init(self):
@@ -1071,8 +1071,8 @@ class Contexte (): #threading.Thread
 
         global screen_height, screen_width
 
-        self.pref_qty = u"€"
-        self.pref_nom = u"Nom"
+        self.pref_qty = u"€ "
+        self.pref_nom = u"Nom:"
         
         self.logo = None
         self.image = None
@@ -1143,9 +1143,9 @@ class Contexte (): #threading.Thread
             
         self.t_qty_nbre = self.canevas.create_text(self.pos_X, self.pos_Y-4, anchor = 'nw', fill = color_debit, font = aFont(26))
         if self.qty_choisie != -1:
-            self.canevas.itemconfig(self.t_qty_nbre,text=self.pref_qty+u"="+unicode(self.qty_choisie)+u" "+self.pref_nom+u":"+self.nom_choisi)
+            self.canevas.itemconfig(self.t_qty_nbre,text=self.pref_qty+unicode(self.qty_choisie)+u"  "+self.pref_nom+self.nom_choisi)
         else:
-            self.canevas.itemconfig(self.t_qty_nbre,text=self.pref_nom+u":"+self.nom_choisi )
+            self.canevas.itemconfig(self.t_qty_nbre,text=self.pref_nom+self.nom_choisi )
 
 
     # Fonction TKINTER : permet d'inserer un interligne d'une taille régulable 
@@ -1799,6 +1799,8 @@ class Contexte (): #threading.Thread
                     self.panier[self.produit] += 1
                 else:
                     self.panier[self.produit] = self.qty_choisie
+                if self.panier[self.produit] <= 0:
+                    del self.panier[self.produit]
             else :
                 if self.qty_choisie == -1 :
                     self.panier[self.produit] = 1
@@ -1819,6 +1821,8 @@ class Contexte (): #threading.Thread
                     self.panier[self.produit] -= 1
                 else:
                     self.panier[self.produit] = self.qty_choisie
+                if self.panier[self.produit] <= 0:
+                    del self.panier[self.produit]
                 self.prev_panier = self.panier
                 self.setQty(-1)                    
             else :
@@ -1893,26 +1897,26 @@ class Contexte (): #threading.Thread
                                     self.reinit(self.user, res)                    
                                     ecran_message(self,0,u"!Nouveau bracelet: ",u"Choisir le montant",u"à ajouter sur le bracelet.", u"Par défaut : "+unicode(barbaraConfiguration.defaultAmount)+" euros",u" ",\
                                                    u"!Bracelet déjà vendu: ",u"Recharge,",u"Solde", u"ou Remboursement")
-                                    self.pref_qty = u"€"
+                                    self.pref_qty = u"€ "
                                     self.pref_nom = u""
                             elif res == CB_Vente_Produits:
                                 if self.user.allowed('c'):
                                     self.reinit(self.user, res)                    
                                     ecran_message(self,0,u"Scanner les ventes",u"puis le bracelet",u"du client")
-                                    self.pref_qty = u"Qte"
+                                    self.pref_qty = u"Qte="
                                     self.pref_nom = u""
                             elif res == CB_Stock:
                                 if self.user.allowed('g'):
                                     self.reinit(self.user, res)                    
                                     ecran_message(self,0,u"!Produits",u"!et Services",u"!disponibles")
-                                    self.pref_qty = u"Cents"
-                                    self.pref_nom = u"Nom"
+                                    self.pref_qty = u"Cents="
+                                    self.pref_nom = u"Nom:"
                             elif res == CB_Collabs:
                                 if self.user.allowed('g'):
                                     self.reinit(self.user, res)                    
                                     ecran_message(self,0,u"!Collaborateurs",u"et privilèges")
-                                    self.pref_qty = u"Priv"
-                                    self.pref_nom = u"Nom"
+                                    self.pref_qty = u"Priv."
+                                    self.pref_nom = u"Nom:"
                             elif res == CB_Gestion:
                                 if self.user.allowed('g'):
                                     self.reinit(self.user, res)                    
@@ -1923,8 +1927,8 @@ class Contexte (): #threading.Thread
                                 if self.user.allowed('g'):
                                     self.reinit(self.user, res)                    
                                     ecran_message(self,0,u"!Scanners environnants")
-                                    self.pref_qty = u"akuino"
-                                    self.pref_nom = u"Nom"
+                                    self.pref_qty = u"akuino#"
+                                    self.pref_nom = u"Nom:"
 
                         return True
                     elif res in actions :
