@@ -1679,7 +1679,7 @@ class Contexte (): #threading.Thread
         self.produit.fields[u"name"] = self.nom_choisi
         if self.qty_choisie and self.qty_choisie >= 0:
             self.produit.setCents(self.qty_choisie)
-        if self.produit.isActive():
+        if deny:
             self.produit.fields[u"deny"] = ""
         else:
             self.produit.fields[u"deny"] = "1"
@@ -1938,7 +1938,7 @@ class Contexte (): #threading.Thread
                                 print "Desactiver Produit"
                                 if self.produit:
                                     self.produit.setInactive()
-                                    if self.sauver_produit():
+                                    if self.sauver_produit(True):
                                         ecran_produit(self)
                                     else:
                                         ecran_message(self,0,u"!Problème de réseau?",u"Déscativer Produit",u"annulé")
@@ -2017,7 +2017,7 @@ class Contexte (): #threading.Thread
                                     self.partial_init()
                             elif self.mode == CB_Stock:
                                 print "Sauver info Produit"
-                                if self.sauver_produit():
+                                if self.sauver_produit(False):
                                     ecran_produit(self)
                                 else:
                                     ecran_message(self,0,u"!Problème de réseau?",u"Modif.Produit annulée")

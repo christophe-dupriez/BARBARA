@@ -1008,7 +1008,7 @@ class SaveConfigurationObject(app.page):
             fieldsReceived = jsonpickle.decode(web.data())
             currObject = self.allObjects.assignObject(objectId,fieldsReceived)
             if currObject.__class__.__name__ in ["User","Products"]:
-                allObjects = configuration.findAllFromObject(currObject)
+                allObjects = c.findAllFromObject(currObject)
                 if allObjects.local:
                     with open(baseDir+config.allObjects.filename,"a") as csvfile:
                         writer = unicodecsv.DictWriter(csvfile, delimiter = '\t', fieldnames=config.allObjects.fieldnames, encoding="utf-8")
