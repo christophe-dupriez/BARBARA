@@ -232,11 +232,11 @@ else: # Local Data
 
 CB_User_BARBARA =  "1000000010121"
 
-if not CB_User_BARBARA in c.AllUsers.elements:
-    aRow = c.AllUsers.defaultRow(CB_User_BARBARA)
-    aRow['access'] = u"g"
-    aRow['name'] = u"BARBARA"
-    c.AllUsers.assignObject(CB_User_BARBARA,aRow)
+#if not CB_User_BARBARA in c.AllUsers.elements:
+aRow = c.AllUsers.defaultRow(CB_User_BARBARA)
+aRow['access'] = u"g"
+aRow['name'] = u"BARBARA"
+c.AllUsers.assignObject(CB_User_BARBARA,aRow)
 
 # Ensure a USB Scanner
 
