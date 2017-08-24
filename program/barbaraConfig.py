@@ -41,9 +41,11 @@ class barbaraConfig():
         self.crlf=None
         self.lf=None
         self.esc=None
+        self.braceType=0
         self.braceMin=990000000000
         self.braceMax=999999999999
         self.braceTitle = 'BARBARA'
+        self.screenType=0
         self.language = "FR"
         self.defaultAmount = 20.0
 
@@ -54,7 +56,7 @@ class barbaraConfig():
         try:
                 configFile = os.path.expanduser(APPdirectory+'/barbara.ini')
                 aConfig.readfp(codecs.open(configFile,'r','utf8'))
-                #print(aConfig.sections())
+                print(aConfig.sections())
                 roleConfig = ""
 
                 if u'network' in aConfig.sections():
@@ -132,13 +134,30 @@ class barbaraConfig():
                             elif key == u'amount':
                                 try:
                                     self.defaultAmount = float(anItem[1])
-                                    if (self.braceMax < 100000000000) or (self.braceMax > 999999999999):
+                                    if self.defaultAmount <= 0:
                                         syslog.syslog(syslog.LOG_ERR, u"BARBARA, valeur du bracelet doit etre un nombre comme 20.0   amount="+anItem[1])
                                         self.defaultAmount =20.0
                                 except:
                                     syslog.syslog(syslog.LOG_ERR, u"BARBARA, valeur du bracelet doit être un montant en euros. amount="+anItem[1])                                
                             elif key == u'title':
                                 self.braceTitle = anItem[1]
+                            elif key == u'type':
+                                if  anItem[1].lower()== u'rfid':
+                                    self.braceType=1
+                                else:
+                                    self.braceType=0
+                
+                if u'screen' in aConfig.sections():
+                      for anItem in aConfig.items(u'screen'):
+			print anItem
+                        if anItem[1]:
+                            key = anItem[0].lower()
+                            if key == u'type':
+                                if anItem[1].lower() == u'touch':
+                                    self.screenType=1
+                                else:
+                                    self.screenType=0
+
                 if self.alignPrinter:
                     self.alignPrinter = self.cleanString(self.alignPrinter)
                 if self.printBarcode:
@@ -159,7 +178,8 @@ class barbaraConfig():
                 if self.braceMax <= self.braceMin:
                     syslog.syslog(syslog.LOG_ERR, u"BARBARA, Intervalle de génération de bracelets incorrect (max < min): "+unicode(self.braceMax)+" < "+unicode(self.braceMin))
  
-                self.akuinoHost
+                if not self.akuinoHost:
+		    self.akuinoHost="local"
                     
         except:
                 traceback.print_exc()

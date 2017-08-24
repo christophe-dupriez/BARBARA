@@ -5,7 +5,6 @@ from PIL import ImageDraw
 from PIL import ImageFont
 import datetime
 import time
-import SSD1306
 import threading
 
 baseDirTTF = "static/ttf/"

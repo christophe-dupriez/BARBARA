@@ -10,7 +10,7 @@ import datetime
 import io
 import os
 import subprocess
-import pigpio
+#import pigpio
 import codecs
 import sys
 import threading
@@ -20,18 +20,19 @@ import syslog
 import socket
 import netifaces
 import zlib
+import tkFont
 
 from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
 
 # Code source dans le meme repertoire
-import SSD1306
-from keypadClass4 import keypad
+#import SSD1306
+#from keypadClass4 import keypad
 
 # For ADC:
-from smbus import SMBus
-import spidev
+#from smbus import SMBus
+#import spidev
 
 #Impression de barcodes = pas nécessaire car généré par l'imprimante...
 #import barcode
@@ -247,7 +248,7 @@ if not MAC_USB_Scanner in c.AllScanners.elements:
     aRow[u'client'] = c.barbaraConfig.akuinoHost
     c.AllScanners.assignObject(MAC_USB_Scanner,aRow)
 
-PIG = pigpio.pi()
+PIG = None#pigpio.pi()
 if hardConf.running:
     PIG.set_mode(hardConf.running, pigpio.OUTPUT)
     PIG.write(hardConf.running, 0)
@@ -260,7 +261,7 @@ else:
     screen = OLEDScreen(False, disp = None)
 
 
-TAILLE_ECRAN = 4 # nombre d'elements que l'on affiche à la fois dans les stocks et la facture
+TAILLE_ECRAN = 9 # nombre d'elements que l'on affiche à la fois dans les stocks et la facture
 
 baseDirIMG = "static/img/"
 
@@ -330,6 +331,12 @@ CB_Modifier = "1000000010046"      # Enlever au lieu d'ajouter des produits au p
 CB_Generer =  "1000000011005"      # Impression d'un code barre arbitraire
 CB_Initialiser =  "1000000011012"  # Initialiser l'imprimante, lancer un scan Bluetooth
 CB_Effacer_Nombre =  "1000000011098" # Mettre le nombre complètement à zéro
+CB_Base_Nombre = 1000090000000
+CB_Creer_Sans_Barcode = "1000000011104"
+CB_Ticket1 = "1000000011111"
+CB_Ticket2 = "1000000011128"
+CB_Ticket3 = "1000000011135"
+CB_Ticket4 = "1000000011142"
 #TODO:
 #CB_Nouveau = Accepter un code-barre "extérieur" qui n'existe pas ailleurs dans le systeme
 #CB_Regenerer = Reimprimer le dernier code barre accede
@@ -345,7 +352,12 @@ actions = {CB_Suivant : "Suivant",
            CB_Generer: "Generer",
            CB_Initialiser: "Initialiser",
            CB_Effacer_Nombre: "Zéro",
-           CB_Shutdown : "TOUT FERMER"
+           CB_Shutdown : "TOUT FERMER",
+           CB_Creer_Sans_Barcode : "Creer Sans Barcode",
+           CB_Ticket1 : "Ticket 1",
+           CB_Ticket2 : "Ticket 2",
+           CB_Ticket3 : "Ticket 3",
+           CB_Ticket4 : "Ticket 4"
            }
 setMessages(actions)
 
@@ -360,19 +372,30 @@ menu_choices = {"1000000012019":1,
                 "1000000012095":9 }
 
 #BACKGROUND:
-color_window = "gray25"
-color_canevas = "navy"
+color_window = u"gray25"
+color_canevas = u"navy"
+
+color_principal = u"navy"
+color_fonction = u"rosy brown"
+color_liste = u"NavajoWhite3"
+color_ticket = u"khaki3"
+color_plus = u"gold2"
+color_moins = u"gray25"
+color_point = u"tomato"
 
 #FOREGROUND
-color_product = "cyan"
-color_client = "magenta"
-color_message = "orange"
-color_header = "white"
-color_debit = "yellow"
-color_credit = "chartreuse2"
-color_index = "green"
+color_product = u"cyan"
+color_client = u"magenta"
+color_message = u"orange"
+color_header = u"white"
+color_debit = u"yellow"
+color_credit = u"chartreuse2"
+color_index = u"green"
 
-# Preparatio de l'ecran integre : affichage du s, de l'utilisateur et de l'heure
+color_texte = u"white"
+
+
+# Preparation de l'ecran integre : affichage du s, de l'utilisateur et de l'heure
 def lcd_screen (contexte) :
 
     if not hardConf.oled:
@@ -972,57 +995,310 @@ def ecran_scanner(contexte):
 ##    screen.show()
 
 
-def aFont(size):
-   return ("",size,"bold")
-
 # acquisition des parametres de l'écran au démarage du programme (résolution)
 tkdisplay_root = Tkinter.Tk()
 #tkdisplay_root.after(50,tkdisplay_root.quit)
-screen_height = tkdisplay_root.winfo_screenheight() - 48
+#screen_height = tkdisplay_root.winfo_screenheight() - 48
+screen_height=480
 net_screen_height = screen_height - 32 - 4 - 8
-screen_width = tkdisplay_root.winfo_screenwidth()
+#screen_width = tkdisplay_root.winfo_screenwidth()
+screen_width=800
+
+size10=tkFont.Font(size=10,weight="bold")
+size11=tkFont.Font(size=11,weight="bold")
+size12=tkFont.Font(size=12,weight="bold")
+size13=tkFont.Font(size=13,weight="bold")
+size14=tkFont.Font(size=14,weight="bold")
+size15=tkFont.Font(size=15,weight="bold")
+size16=tkFont.Font(size=16,weight="bold")
+size17=tkFont.Font(size=17,weight="bold")
+size18=tkFont.Font(size=18,weight="bold")
+size19=tkFont.Font(size=19,weight="bold")
+size20=tkFont.Font(size=20,weight="bold")
+size21=tkFont.Font(size=21,weight="bold")
+size22=tkFont.Font(size=22,weight="bold")
+size23=tkFont.Font(size=23,weight="bold")
+size24=tkFont.Font(size=24,weight="bold")
+size25=tkFont.Font(size=25,weight="bold")
+size26=tkFont.Font(size=26,weight="bold")
+size27=tkFont.Font(size=27,weight="bold")
+size28=tkFont.Font(size=28,weight="bold")
+size29=tkFont.Font(size=29,weight="bold")
+size30=tkFont.Font(size=30,weight="bold")
+size36=tkFont.Font(size=36,weight="bold")
+size38=tkFont.Font(size=38,weight="bold")
 
 while not scannersLoaded:
     print "Waiting for Central server"
     time.sleep(2)
 
-MAX_TILES = c.AllScanners.countActive()
-if MAX_TILES < 1:
-    MAX_TILES = 1
-elif MAX_TILES > 6:
-    MAX_TILES = 6
 
-if MAX_TILES == 1:
-    tile_height = net_screen_height
-    tile_width = screen_width
-elif MAX_TILES == 2:
-    tile_height = net_screen_height
-    tile_width = int(screen_width / 2)
-elif MAX_TILES <= 4:
-    tile_height = int(net_screen_height / 2)
-    tile_width = int(screen_width / 2)
+screen_type=barbaraConfiguration.screenType
+brace_type = barbaraConfiguration.braceType 
+print brace_type
+
+if screen_type==0:
+    MAX_TILES = c.AllScanners.countActive()
+    if MAX_TILES < 1:
+        MAX_TILES = 1
+    elif MAX_TILES > 6:
+        MAX_TILES = 6
+    if MAX_TILES == 1:
+        tile_height = net_screen_height
+        tile_width = screen_width
+    elif MAX_TILES == 2:
+        tile_height = net_screen_height
+        tile_width = int(screen_width / 2)
+    elif MAX_TILES <= 4:
+        tile_height = int(net_screen_height / 2)
+        tile_width = int(screen_width / 2)
+    else:
+        tile_height = int(net_screen_height / 2)
+        tile_width = int(screen_width / 3)
 else:
-    tile_height = int(net_screen_height / 2)
-    tile_width = int(screen_width / 3)
-
+    MAX_TILES=1
+    tile_height = net_screen_height
+    tile_width = int(screen_width / 2)   
+    
 tkdisplay_root.geometry(unicode(screen_width)+"x"+unicode(screen_height))
 tkdisplay_root.minsize(width=screen_width,height=screen_height)
 tkdisplay_root.resizable(width=False,height=False)
-frame_height = tile_height - 20
+frame_height = tile_height - 10
 frame_width = tile_width - 4 - 8
 print "Screen : "+ unicode(screen_width) + "x" + unicode(screen_height)
 
-logo = Tkinter.PhotoImage(file = baseDirIMG+"AKUINO.gif")
-logo_frame = Tkinter.Canvas(tkdisplay_root, background = 'black', height = logo.height(), width = logo.width())
-draw_logo = logo_frame.create_image(1,1,image = logo,anchor=Tkinter.NW,state=Tkinter.NORMAL)
-logo_frame.place(anchor=Tkinter.CENTER,x=screen_width/2, y=screen_height/2)  
+if screen_type==0:
+    logo = Tkinter.PhotoImage(file = baseDirIMG+"AKUINO.gif")
+    logo_frame = Tkinter.Canvas(tkdisplay_root, background = 'black', height = logo.height(), width = logo.width())
+    draw_logo = logo_frame.create_image(1,1,image = logo,anchor=Tkinter.NW,state=Tkinter.NORMAL)
+    logo_frame.place(anchor=Tkinter.CENTER,x=screen_width/2, y=screen_height/2)  
 
 stats_label = Tkinter.StringVar(tkdisplay_root)
 
 stat_frame = Tkinter.Canvas(tkdisplay_root, background = 'black', height = 32, width = screen_width)
 stat_frame.place(anchor=Tkinter.CENTER,x=screen_width/2, y=screen_height-32)  
-stat_time = Tkinter.Label(stat_frame, textvariable = stats_label,background = color_canevas, foreground = color_header, font = aFont(18)) 
+stat_time = Tkinter.Label(stat_frame, textvariable = stats_label,background = color_canevas, foreground = color_header, font = size18) 
 stat_time.place(anchor=Tkinter.NW, x = 1 , y = 1) #positionnement
+
+FrameMenu=None
+TopMenu=None
+FonctionButton=None
+TicketButton=None
+ListeButton=None
+PlusButton=None
+MoinsButton=None
+PointButton=None
+CentralMenu=None
+
+#-------Variables Clavier-------#
+
+principal =[u"Vente Bracelets",u"Vente Produits",u"Utilisateurs",u"Produits",u"Scanners",u"Fonction Gestion",u"User Barbara"]
+principal_barcode=[1000000010039,1000000010053,1000000011036,1000000010114,1000000011043,1000000011050,1000000010121]
+
+ticket_barcode=[1000000012019,1000000012026,1000000012033,1000000012040,1000000012057,1000000012064,1000000012071,1000000012088,1000000012095]
+
+liste_barcode=[1000000012019,1000000012026,1000000012033,1000000012040,1000000012057,1000000012064,1000000012071,1000000012088,1000000012095]
+
+fonction_vente_bracelets=[]
+fonction_vente_bracelets_barcode=[]
+
+fonction_vente_produits=[u"Ticket 1",u"Ticket 2",u"Ticket 3",u"Ticket 4"]
+fonction_vente_produits_barcode=[1000000011111,1000000011128,1000000011135,1000000011142]
+
+fonction_utilisateurs=[u"Droits VB",u"Droits VP",u"Droits G",u"Effacer Nombre"]
+fonction_utilisateurs_barcode=[1000000000016,1000000000207,1000000009002,1000000011098]
+
+fonction_produits=[]
+fonction_produits_barcode=[]
+
+fonction_scanners=[]
+fonction_scanners_barcode=[]
+
+fonction_gestion=[u"Shutdown",u"Initialiser",u"Générer"]
+fonction_gestion_barcode=[1000000011067,1000000011012,1000000011005]
+
+clavier=[1,2,3,4,5,6,7,8,9,u"DEL",0,u"EFF"]
+
+global nombre
+nombre=Tkinter.IntVar()
+nombre.set(u"0")
+
+global t,x
+t,x=0,0
+
+#--------Gestion du Clavier--------#
+
+def destroy_frame():
+    global CentralMenu
+    for widget in CentralMenu.winfo_children():
+        widget.destroy()
+
+def choice(demande):
+    global contexte_unique
+    destroy_frame()
+    if demande==u"menu":
+        Principal()
+    elif demande==u"fonction":
+        Fonction()
+    elif demande==u"ticket":
+        contexte_unique.listeGauche = 2
+        contexte_unique.listeGaucheNow = True
+    elif demande==u"liste":
+        contexte_unique.listeGauche = 1        
+        contexte_unique.listeGaucheNow = True
+    elif demande==u"plus":
+        contexte_unique.inputQueue.put(CB_Suivant)
+        contexte_unique.listeGauche = 1
+        contexte_unique.listeGaucheNow = True
+    elif demande==u"moins":
+        contexte_unique.inputQueue.put(CB_Precedent)
+        contexte_unique.listeGaucheNow = True
+    elif demande==u"point":
+        Point()
+
+contexte_unique=None
+
+def touch(fonction,chiffre):
+    global contexte_unique
+    if fonction==u"principal":
+        barcode=principal_barcode[chiffre]
+        contexte_unique.inputQueue.put(str(barcode))
+        destroy_frame()
+        contexte_unique.listeGauche = 1
+        contexte_unique.listeGaucheNow = (str(barcode) != CB_Gestion) and (str(barcode) != CB_Vente_Bracelets)
+        if str(barcode)==CB_Vente_Bracelets:
+            choice("point")
+        elif str(barcode)==CB_Vente_Produits:
+            choice("liste")
+        elif str(barcode)==CB_Collabs :
+            choice("plus")
+        elif str(barcode)==CB_Stock:
+            choice("plus")
+        elif str(barcode)==CB_Scanners:
+            choice("plus")
+        elif str(barcode)==CB_Gestion:
+           choice("fonction")
+    elif fonction==u"liste":
+        barcode=liste_barcode[chiffre]
+        contexte_unique.inputQueue.put(str(barcode))      
+    elif fonction==u"ticket":
+        barcode=ticket_barcode[chiffre]
+        contexte_unique.inputQueue.put(str(barcode))
+        contexte_unique.listeGauche = 2
+        contexte_unique.listeGaucheNow = (str(barcode) != CB_Gestion) and (str(barcode) != CB_Vente_Bracelets)
+    elif fonction==u"fonction":
+        barcode=principal_barcode[chiffre]
+        if str(barcode)==CB_Vente_Produits:
+            barcode=fonction_vente_produits_barcode[chiffre]
+            contexte_unique.inputQueue.put(str(barcode))
+        elif str(barcode)==CB_Collabs :
+            barcode=fonction_utilisateurs_barcode[chiffre]
+            contexte_unique.inputQueue.put(str(barcode))
+        elif str(barcode)==CB_Gestion:
+            barcode=fonction_gestion_barcode[chiffre]
+            contexte_unique.inputQueue.put(str(barcode))
+
+def Principal():
+    global CentralMenu
+    for key in range(len(principal)):
+        texte=""+str(key)+" "+principal[key]
+        Tkinter.Button(CentralMenu,text=texte,bg=color_principal,fg=color_texte,font=size26,anchor=Tkinter.W,command=lambda key=key:touch("principal",key)).pack(fill=Tkinter.X,expand=1,side=Tkinter.TOP)
+
+def Liste():
+    global CentralMenu, contexte_unique
+    if (contexte_unique.mode == CB_Stock) or (contexte_unique.mode==CB_Vente_Produits):
+        refset = c.AllProducts.elements.keys()[contexte_unique.debut : contexte_unique.debut+TAILLE_ECRAN]
+        produit={}
+        chiffre=0
+        for key in refset:
+            objet = c.AllProducts.elements[key]
+            texte = objet.fields[u'price'] + u" € | " + objet.fields[u'name'] + u" "
+            produit[key]=chiffre
+            Tkinter.Button(CentralMenu,text=texte,bg=color_liste,fg=color_texte,font=size15,anchor=Tkinter.W,command=lambda key=key:touch("liste",produit[key])).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
+            chiffre+=1
+    elif(contexte_unique.mode == CB_Collabs):
+        refset = c.AllUsers.elements.keys()[contexte_unique.debut : contexte_unique.debut+TAILLE_ECRAN]
+        user={}
+        chiffre=0
+        for key in refset:
+            objet = c.AllUsers.elements[key]
+            texte = objet.fields[u'name'] + u" | " + objet.fields[u'access'] + u" "
+            user[key]=chiffre
+            Tkinter.Button(CentralMenu,text=texte,bg=color_liste,fg=color_texte,font=size15,anchor=Tkinter.W,command=lambda key=key:touch("liste",user[key])).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
+            chiffre+=1
+    elif (contexte_unique.mode == CB_Scanners):
+        scan={}
+        chiffre=0
+        refset = c.AllScanners.elements.keys()[contexte_unique.debut : contexte_unique.debut+TAILLE_ECRAN]
+        for key in refset:
+            objet = c.AllScanners.elements[key]
+            texte = objet.fields['name'] + " " + objet.fields['pin']
+            scan[key]=chiffre
+            Tkinter.Button(CentralMenu,text=texte,bg=color_liste,fg=color_texte,font=size15,anchor=Tkinter.W,command=lambda key=key:touch("liste",scan[key])).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
+            chiffre+=1
+
+def Ticket():
+    global CentralMenu
+    for key in range(len(ticket)):
+        texte=""+str(key)+" "+ticket[key]
+        Tkinter.Button(CentralMenu,text=texte,bg=color_ticket,fg=color_texte,font=size14,anchor=Tkinter.W,padx=0,pady=0,command=lambda key=key:touch("ticket",key)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
+
+def ListeGauche():
+    global contexte_unique
+    if contexte_unique.listeGaucheNow:
+        if contexte_unique.listeGauche == 2:
+            Ticket()
+        elif contexte_unique.listeGauche == 1:
+            Liste()
+        contexte_unique.listeGaucheNow = False 
+    
+def Fonction():
+    global contexte_unique
+    print contexte_unique.mode
+    if contexte_unique.mode == CB_Vente_Produits:
+        for key in range(len(fonction_vente_produits)):
+            texte=""+str(key)+" "+fonction_vente_produits[key]
+            Tkinter.Button(CentralMenu,text=texte,bg=color_fonction,fg=color_texte,font=size14,anchor=Tkinter.W,padx=0,pady=0,command=lambda key=key:touch("fonction",key)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
+    elif contexte_unique.mode == CB_Collabs:
+        for key in range(len(fonction_utilisateurs)):
+            texte=""+str(key)+" "+fonction_utilisateurs[key]
+            Tkinter.Button(CentralMenu,text=texte,bg=color_fonction,fg=color_texte,font=size14,anchor=Tkinter.W,padx=0,pady=0,command=lambda key=key:touch("fonction",key)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
+    elif contexte_unique.mode == CB_Gestion:
+        for key in range(len(fonction_gestion)):
+            texte=""+str(key)+" "+fonction_gestion[key]
+            Tkinter.Button(CentralMenu,text=texte,bg=color_fonction,fg=color_texte,font=size14,anchor=Tkinter.W,padx=0,pady=0,command=lambda key=key:touch("fonction",key)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)        
+
+def Point():
+    global x
+    for ligne in range (1,5):
+        for colonne in range (1,4):
+            chiffre=clavier[x]
+            Tkinter.Button(CentralMenu, text=chiffre, command=lambda chiffre=chiffre:keyboard(chiffre),width=tile_width/110,height=tile_height/220,font=size38,bg=color_point,fg=color_texte, pady=15).grid(row=ligne, column=colonne)
+            colonne+=1
+            x+=1
+        ligne+=1
+    x=0
+
+def reset_clavier():
+    global t
+    t=0
+    nombre.set(u"0")
+       
+def keyboard(qte):
+    global t
+    global mem
+    if qte==u"EFF":
+        reset_clavier()
+        contexte_unique.inputQueue.put(CB_Effacer_Nombre)
+    elif qte==u"DEL":
+        t=(t-mem)/10
+        nombre.set(t)
+        contexte_unique.inputQueue.put(str(t+CB_Base_Nombre))
+    else:
+        mem=qte
+        t=t*10+qte
+        nombre.set(t)
+        contexte_unique.inputQueue.put(str(t+CB_Base_Nombre))
 
 allContexte = { }
 # Classe contexte, c'est ici que l'on gère le code barre scanné
@@ -1049,6 +1325,9 @@ class Contexte (): #threading.Thread
         self.charge = False
         self.wait = datetime.datetime.now()
 
+        self.listeGauche = 1
+        self.listeGaucheNow = False
+
     def reinit(self,anUser, save_mode = None):
         self.user = anUser # Utilisateur loggé
         self.mode = save_mode
@@ -1069,7 +1348,7 @@ class Contexte (): #threading.Thread
             self.currScanner = c.AllScanners.elements[scanid] # Scanner que l'on a en main!
         self.prev_panier = {}
 
-        global screen_height, screen_width
+        global screen_height, screen_width, screen_type
 
         self.pref_qty = u"€ "
         self.pref_nom = u"Nom:"
@@ -1077,13 +1356,48 @@ class Contexte (): #threading.Thread
         self.logo = None
         self.image = None
         self.draw = None
-        
-        p_x = tile_width * (self.rank % 3)
-        p_y = tile_height * int(self.rank / 3)
 
-        self.window = Tkinter.LabelFrame (tkdisplay_root, text = unicode(self.rank)+'#'+(unicode(self.currScanner.id)+'#'+unicode(self.currScanner.fields["name"])) if self.currScanner else u"", borderwidth = 2, labelanchor = 'n', bg = color_window,fg = "white")
-        self.window.place(height = tile_height, width = tile_width, x=p_x, y=p_y )
-        self.l_frame = self.window
+        print "="+str(screen_type)
+
+        if screen_type==0:
+            p_x = tile_width * (self.rank % 3)
+            p_y = tile_height * int(self.rank / 3)
+
+            self.window = Tkinter.LabelFrame (tkdisplay_root, text = unicode(self.rank)+'#'+(unicode(self.currScanner.id)+'#'+unicode(self.currScanner.fields["name"])) if self.currScanner else u"", borderwidth = 2, labelanchor = 'n', bg = color_window,fg = "white")
+            self.window.place(height = tile_height, width = tile_width, x=p_x, y=p_y )
+            self.l_frame = self.window
+
+        else:
+            p_x=tile_width
+            p_y=0
+
+            global FrameMenu, TopMenu, FonctionButton, TicketButton, ListeButton, PlusButton, MoinsButton, PointButton, CentralMenu
+        
+            FrameMenu=Tkinter.Frame(tkdisplay_root,width=tile_width,height=tile_height)#,width=tile_width,height=tile_height,padx=0,pady=0)
+            FrameMenu.pack(anchor=Tkinter.NW,expand=1)
+
+            TopMenu=Tkinter.Frame(FrameMenu,width=tile_width,height=tile_height/10)#,width=tile_width,height=tile_height/10,padx=0,pady=0)
+            TopMenu.pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)#,padx=0,pady=0,ipadx=0,ipady=0)
+
+            MenuButton=Tkinter.Button(TopMenu,text="/0",bg=color_index,fg=color_texte,height=tile_height/500,font=size24,command=lambda menu="menu":choice(menu)).pack(fill=Tkinter.X,expand=1,side=Tkinter.LEFT)
+            FonctionButton=Tkinter.Button(TopMenu,text="/",bg=color_fonction,fg=color_texte,font=size24,command=lambda fonction="fonction":choice(fonction)).pack(fill=Tkinter.X,expand=1,side=Tkinter.LEFT)
+            TicketButton=Tkinter.Button(TopMenu,text=u"*",bg=color_ticket,fg=color_texte,font=size24,command=lambda ticket="ticket":choice(ticket)).pack(fill=Tkinter.X,expand=1,side=Tkinter.LEFT)
+            ListeButton=Tkinter.Button(TopMenu,text=u"Entr",bg=color_liste,fg=color_texte,font=size24,command=lambda liste="liste":choice(liste)).pack(fill=Tkinter.X,expand=1,side=Tkinter.LEFT)
+            PlusButton=Tkinter.Button(TopMenu,text=u"+",bg=color_plus,fg=color_texte,font=size24,command=lambda plus="plus":choice(plus)).pack(fill=Tkinter.X,expand=1,side=Tkinter.LEFT)
+            MoinsButton=Tkinter.Button(TopMenu,text=u"-",bg=color_moins,fg=color_texte,font=size24,command=lambda moins="moins":choice(moins)).pack(fill=Tkinter.X,expand=1,side=Tkinter.LEFT)
+            PointButton=Tkinter.Button(TopMenu,text=u".",bg=color_point,fg=color_texte,font=size24,command=lambda point="point":choice(point)).pack(fill=Tkinter.X,expand=1,side=Tkinter.LEFT)
+
+            CentralMenu=Tkinter.Frame(FrameMenu,width=tile_width,height=8*tile_height/10)
+            CentralMenu.pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
+
+            Principal()
+
+            global contexte_unique
+            contexte_unique=self
+
+            self.window = Tkinter.Frame (tkdisplay_root,borderwidth = 2, bg = color_window)
+            self.window.place(height = tile_height, width = tile_width, x=p_x, y=p_y )
+            self.l_frame = self.window
 
     def setQty(self,val):
         if val <= 0:
@@ -1130,18 +1444,21 @@ class Contexte (): #threading.Thread
 
     # Fonction TKINTER : affiche le numero de l'utilisateur en bas à droite
     def number(self) :
+
+        global screen_type
+        
         #Emplacement CONSTANT
         self.pos_Y = frame_height-45
         self.pos_X = 10
 
         if self.t_qty_nbre:
             self.canevas.delete(self.t_qty_nbre)
-        else:
+        elif screen_type == 0:
             # was self.rank
-            t_number = Tkinter.Label(self.canevas, text = self.currScanner.fields["name"] ,background = "yellow", foreground = 'black', font = aFont(26))
+            t_number = Tkinter.Label(self.canevas, text = self.currScanner.fields["name"] ,background = "yellow", foreground = 'black', font = size26)
             t_number.place(anchor=Tkinter.SE, x = frame_width, y = frame_height) #positionnement
             
-        self.t_qty_nbre = self.canevas.create_text(self.pos_X, self.pos_Y-4, anchor = 'nw', fill = color_debit, font = aFont(26))
+        self.t_qty_nbre = self.canevas.create_text(self.pos_X, self.pos_Y-4, anchor = 'nw', fill = color_debit, font = size26)
         if self.qty_choisie != -1:
             self.canevas.itemconfig(self.t_qty_nbre,text=self.pref_qty+unicode(self.qty_choisie)+u"  "+self.pref_nom+self.nom_choisi)
         else:
@@ -1155,7 +1472,7 @@ class Contexte (): #threading.Thread
         self.pos_X = 1 #on se remet au début de la ligne                      
 
     # Fonction TKINTER : affiche le symbole screen.euro avec la taile et positionnement demandés
-    def euro(self, last_text,taille = 16, anchor_choose  = 'sw', color=color_debit) :
+    def euro(self, last_text,taille = size16, anchor_choose  = 'sw', color=color_debit) :
         # symbole screen.euro
         width,height,X,Y = self.size(last_text) #calcul de la largeur en pixel du texte : var, type_var
 
@@ -1167,7 +1484,7 @@ class Contexte (): #threading.Thread
             Y_position = Y
         else :
             self.pos_X += X
-        self.t_euro = self.canevas.create_text(self.pos_X, Y_position, anchor = anchor_choose, text = screen.euro , fill = color, font = aFont(taille))
+        self.t_euro = self.canevas.create_text(self.pos_X, Y_position, anchor = anchor_choose, text = screen.euro , fill = color, font = taille)
 
     # Fonction TKINTER : calcul de la taille du texte/label reçu
     def size(self, text_cell):
@@ -1199,20 +1516,20 @@ class Contexte (): #threading.Thread
                
         #Heure
         strnow = unicode(datetime.datetime.now().strftime("%H:%M"))
-        t_time = Tkinter.Label(self.canevas, text = strnow ,background = color_canevas, foreground = color_header, font = aFont(18)) 
+        t_time = Tkinter.Label(self.canevas, text = strnow ,background = color_canevas, foreground = color_header, font = size18) 
         t_time.place(anchor=Tkinter.NE, x = frame_width , y = 1) #positionnement
         
         #Banière commune
         if self.user != None :
-            t_user = Tkinter.Label(self.canevas, text = self.user.fields["name"] ,background = "white", foreground = 'black', font = aFont(18))
+            t_user = Tkinter.Label(self.canevas, text = self.user.fields["name"] ,background = "white", foreground = 'black', font = size18)
             if self.mode != None :
-                t_mode = Tkinter.Label(self.canevas, text = modes[self.mode],background = color_canevas, foreground = color_header, font = aFont(18))
+                t_mode = Tkinter.Label(self.canevas, text = modes[self.mode],background = color_canevas, foreground = color_header, font = size18)
                 
             else :
-                t_mode = Tkinter.Label(self.canevas, text = "Choisir Mode",background = color_canevas, foreground = color_header, font = aFont(18))
+                t_mode = Tkinter.Label(self.canevas, text = "Choisir Mode",background = color_canevas, foreground = color_header, font = size18)
         else :
-            t_user = Tkinter.Label(self.canevas, text = " Identifiez vous ", background = "white", foreground = 'black' , font = aFont(18))
-            t_mode = Tkinter.Label(self.canevas, text = " ",background = color_canevas, foreground = color_header, font = aFont(18))
+            t_user = Tkinter.Label(self.canevas, text = " Identifiez vous ", background = "white", foreground = 'black' , font = size18)
+            t_mode = Tkinter.Label(self.canevas, text = " ",background = color_canevas, foreground = color_header, font = size18)
         t_user.place(anchor=Tkinter.N, x = frame_width/2, y = 1) #positionnement
         
         t_mode.place(x = 1, y = 1) #positionnement: pas de calcul ici, car on part du début : (1,1)
@@ -1238,7 +1555,7 @@ class Contexte (): #threading.Thread
                     elif msg[0] == '!':
                         color_fg = color_message
                         msg = msg[1:]
-                t_msg = self.canevas.create_text(self.pos_X,self.pos_Y,text = msg , fill = color_fg, font = aFont(20))
+                t_msg = self.canevas.create_text(self.pos_X,self.pos_Y,text = msg , fill = color_fg, font = size20)
 
                 self.saut_de_ligne(30)
                 #print self.pos_Y
@@ -1266,25 +1583,25 @@ class Contexte (): #threading.Thread
             # nom du produit
             self.pos_X = (frame_width-4)/2 #determination en X de la position du Label : ici on centre
             self.pos_Y = frame_height * 0.3
-            t_produit = self.canevas.create_text(self.pos_X, self.pos_Y, text = self.produit.fields["name"] , fill= color_header, font = aFont(24))
+            t_produit = self.canevas.create_text(self.pos_X, self.pos_Y, text = self.produit.fields["name"] , fill= color_header, font = size24)
            
             #saut de ligne
             self.saut_de_ligne(60)   
             
             # quantite
             self.pos_X = (frame_width * 0.3)#determination en X de la position du Label : 1/4 
-            t_qty = self.canevas.create_text(self.pos_X, self.pos_Y, anchor = 'nw', text = unicode(self.panier[self.produit]) ,fill = color_message, font = aFont(30))
+            t_qty = self.canevas.create_text(self.pos_X, self.pos_Y, anchor = 'nw', text = unicode(self.panier[self.produit]) ,fill = color_message, font = size30)
             
             # foisrs
             width,height,X,Y = self.size (t_qty) #calcul des dimensions en pixel du texte/label : var, type_var
             self.pos_X += width  #determination en X de la position du Label : 1/4 + t_qty
-            t_symbole = self.canevas.create_text(self.pos_X, self.pos_Y+12, anchor = 'nw', text = " x " ,fill  = color_header, font = aFont(18))
+            t_symbole = self.canevas.create_text(self.pos_X, self.pos_Y+12, anchor = 'nw', text = " x " ,fill  = color_header, font = size18)
 
             # prix du produit
             width,height,X,Y = self.size(t_symbole) #calcul des dimensions en pixel du texte/label : var, type_var
             self.pos_X += width  #determination en X de la position du Label : 2/5 + t_qty + t_symbole
             
-            t_price = self.canevas.create_text(self.pos_X, self.pos_Y+8, anchor = 'nw', text = self.produit.fields["price"] , fill = color_message, font = aFont(24))
+            t_price = self.canevas.create_text(self.pos_X, self.pos_Y+8, anchor = 'nw', text = self.produit.fields["price"] , fill = color_message, font = size24)
             save_pos_Y = self.pos_Y
             # symbole screen.euro
             self.euro(t_price,color=color_message)
@@ -1293,13 +1610,13 @@ class Contexte (): #threading.Thread
             width,height,X,Y = self.size (self.t_euro) #calcul des dimensions en pixel du texte/label : var, type_var
             self.pos_X += width #determination en X de la position du Label : 2/5 + t_qty + t_symbole + t_price + t_euro
 
-            t_symbole = self.canevas.create_text(self.pos_X, self.pos_Y+12, anchor = 'nw', text = " = " , fill = color_header, font = aFont(18))
+            t_symbole = self.canevas.create_text(self.pos_X, self.pos_Y+12, anchor = 'nw', text = " = " , fill = color_header, font = size18)
 
             # total pour ce produit
             width,height,X,Y = self.size (t_symbole) #calcul des dimensions en pixel du texte/label : var, type_var
             self.pos_X +=  width #determination en X de la position du Label : 2/5 + t_qty + t_symbole + t_price + t_euro + t_symbole
             
-            t_total = self.canevas.create_text (self.pos_X, self.pos_Y, anchor = 'nw', text = unicode(total) ,fill = color_debit, font = aFont(30))
+            t_total = self.canevas.create_text (self.pos_X, self.pos_Y, anchor = 'nw', text = unicode(total) ,fill = color_debit, font = size30)
             
             # symbole screen.euro
             self.euro(t_total)
@@ -1310,11 +1627,12 @@ class Contexte (): #threading.Thread
             # total du panier
             total,bouteilles = self.total_panier(self.panier)
             self.pos_X = frame_width * 0.5 #determination en X de la position du Label : ici on centre
-            t_total = self.canevas.create_text(self.pos_X,self.pos_Y,anchor = 'n',text =  unicode(bouteilles)+u" produit"+("s" if bouteilles > 1 else u""), fill = color_message, font = aFont(20))
+            t_total = self.canevas.create_text(self.pos_X,self.pos_Y,anchor = 'n',text =  unicode(bouteilles)+u" produit"+("s" if bouteilles > 1 else u""), fill = color_message, font = size20)
             self.saut_de_ligne(45)   
             self.pos_X = frame_width * 0.5 #determination en X de la position du Label : ici on centre
-            t_total = self.canevas.create_text(self.pos_X,self.pos_Y,anchor = 'n',text =  unicode(total)+screen.euro , fill = color_debit, font = aFont(30))
+            t_total = self.canevas.create_text(self.pos_X,self.pos_Y,anchor = 'n',text =  unicode(total)+screen.euro , fill = color_debit, font = size30)
             
+
     def tk_transaction_client(self) :
             self.ensure_tkdisplay()
             #Recuperation des valeur utilses
@@ -1326,7 +1644,7 @@ class Contexte (): #threading.Thread
 
             # solde client
             self.pos_X = (frame_width * 0.3)  #determination en X de la position du Label :
-            t_solde = self.canevas.create_text(self.pos_X, self.pos_Y, anchor = 'nw', text = unicode(solde), fill = color_credit, font= aFont(22))
+            t_solde = self.canevas.create_text(self.pos_X, self.pos_Y, anchor = 'nw', text = unicode(solde), fill = color_credit, font= size22)
 
             # symbole screen.euro
             self.euro(t_solde, color=color_credit)
@@ -1334,31 +1652,31 @@ class Contexte (): #threading.Thread
             # moins
             width,height,X,Y = self.size (self.t_euro) #calcul des dimensions en pixel du texte/label 
             self.pos_X +=  width #determination en X de la position du Label : 2/5 + t_solde + t_euro
-            t_symbole = self.canevas.create_text(self.pos_X, self.pos_Y, anchor = 'nw', text = " - " , fill = color_header, font = aFont(22))
+            t_symbole = self.canevas.create_text(self.pos_X, self.pos_Y, anchor = 'nw', text = " - " , fill = color_header, font = size22)
             
             # total du panier
             width,height,X,Y = self.size (t_symbole) #calcul des dimensions en pixel du texte/label : var, type_var
             self.pos_X += width #determination en X de la position du Label : t_solde + t_euro + self.symbole
-            t_total = self.canevas.create_text(self.pos_X, self.pos_Y, anchor = "nw", text = unicode(total), fill = color_debit, font=aFont(22))
+            t_total = self.canevas.create_text(self.pos_X, self.pos_Y, anchor = "nw", text = unicode(total), fill = color_debit, font=size22)
             
             # symbole screen.euro
             self.euro(t_total)
 
             #saut de ligne
             self.saut_de_ligne(34)
-            t_bouteille = self.canevas.create_text(frame_width*0.5, self.pos_Y, anchor = "n", text = u"("+unicode(bouteilles)+u" produit"+(u"s" if bouteilles>1 else u"")+u")", fill = color_message, font=aFont(18))
+            t_bouteille = self.canevas.create_text(frame_width*0.5, self.pos_Y, anchor = "n", text = u"("+unicode(bouteilles)+u" produit"+(u"s" if bouteilles>1 else u"")+u")", fill = color_message, font=size18)
 
             #saut de ligne
             self.saut_de_ligne()
 ##            
 ##            # egal
 ##            self.pos_X = frame_width*0.3 #determination en X de la position du Label            
-##            t_symbole = self.canevas.create_text(self.pos_X, self.pos_Y, anchor = 'sw', text = " = " , fill = color_header, font = aFont(18))
+##            t_symbole = self.canevas.create_text(self.pos_X, self.pos_Y, anchor = 'sw', text = " = " , fill = color_header, font = size18)
 ##
 ##            # reste
 ##            self.sizeX = self.size (t_symbole,"TEXT") #calcul des dimensions en pixel du texte/label : var, type_var
 ##            self.pos_X += self.sizes[2]-self.sizes[0] #determination en X de la position du Label : t_symbole
-##            t_reste = self.canevas.create_text(self.pos_X, self.pos_Y,anchor = 'sw', text = reste, fill = color_credit, font=aFont(30))
+##            t_reste = self.canevas.create_text(self.pos_X, self.pos_Y,anchor = 'sw', text = reste, fill = color_credit, font=size30)
 ##
 ##            # symbole screen.euro
 ##            self.euro(t_reste,26,color=color_credit)
@@ -1376,28 +1694,28 @@ class Contexte (): #threading.Thread
             if charge :
                 # barcode
                 self.pos_X = (frame_width-4)/2 #determination en X de la position du Label : ici on centre
-                t_barcode = self.canevas.create_text(self.pos_X, self.pos_Y, text = self.client.fields['barcode'], fill = color_client, font = aFont(26))
+                t_barcode = self.canevas.create_text(self.pos_X, self.pos_Y, text = self.client.fields['barcode'], fill = color_client, font = size26)
 
                 #saut de ligne
                 self.saut_de_ligne() 
 
                 self.pos_X = frame_width * 0.5 #determination en X de la position du Label : 2/5
-                t_montant = self.canevas.create_text(self.pos_X, self.pos_Y, anchor = "center",text = "Montant : " + unicode(montant) + screen.euro, fill = color_header, font = aFont(30))
+                t_montant = self.canevas.create_text(self.pos_X, self.pos_Y, anchor = "center",text = "Montant : " + unicode(montant) + screen.euro, fill = color_header, font = size30)
                     
                 #saut de ligne
                 self.saut_de_ligne() 
 
                 self.pos_X = frame_width/2  #determination en X de la position du Label : ici on centre
-                t_msg = self.canevas.create_text(self.pos_X, self.pos_Y, text = "Cash ou Carte ?" , fill = color_message, font = aFont(20))
+                t_msg = self.canevas.create_text(self.pos_X, self.pos_Y, text = "Cash ou Carte ?" , fill = color_message, font = size20)
 
                 #saut de ligne
                 self.saut_de_ligne(45)   
 
                 self.pos_X = frame_width/2  #determination en X de la position du Label : ici on centre
-                t_msg = self.canevas.create_text(self.pos_X,self.pos_Y, text = "Annuler ?", fill = color_message, font = aFont(20))
+                t_msg = self.canevas.create_text(self.pos_X,self.pos_Y, text = "Annuler ?", fill = color_message, font = size20)
             else:
                 self.pos_X = frame_width/2  #determination en X de la position du Label : ici on centre
-                t_msg = self.canevas.create_text(self.pos_X, self.pos_Y, text = u"Chargement effectué: " + unicode(montant) + screen.euro , fill = color_header, font = aFont(20))
+                t_msg = self.canevas.create_text(self.pos_X, self.pos_Y, text = u"Chargement effectué: " + unicode(montant) + screen.euro , fill = color_header, font = size20)
                 
                 #saut de ligne
                 self.saut_de_ligne()
@@ -1409,7 +1727,7 @@ class Contexte (): #threading.Thread
             # barcode
             self.pos_X = frame_width/2 
             self.pos_Y = pos_line
-            t_barcode = self.canevas.create_text(self.pos_X, self.pos_Y, text = self.client.fields['barcode'], fill = color_client, font = aFont(26))
+            t_barcode = self.canevas.create_text(self.pos_X, self.pos_Y, text = self.client.fields['barcode'], fill = color_client, font = size26)
 
 
             #saut de ligne
@@ -1417,83 +1735,83 @@ class Contexte (): #threading.Thread
             
             # solde
             self.pos_X = frame_width*0.5
-            t_solde = self.canevas.create_text(self.pos_X, self.pos_Y, anchor = 'n',text = self.client.fields["amount"]+screen.euro, fill = color_header, font = aFont(30))
+            t_solde = self.canevas.create_text(self.pos_X, self.pos_Y, anchor = 'n',text = self.client.fields["amount"]+screen.euro, fill = color_header, font = size30)
 
     def tk_produit(self) :
             self.ensure_tkdisplay()
             # nom
             self.pos_X = frame_width/2
             self.pos_Y = frame_height/2.5
-            t_produit = self.canevas.create_text(self.pos_X, self.pos_Y, text = self.produit.fields['name'], fill = color_header, font = aFont(26))
+            t_produit = self.canevas.create_text(self.pos_X, self.pos_Y, text = self.produit.fields['name'], fill = color_header, font = size26)
 
             #saut de ligne
             self.saut_de_ligne(40)
             
             # barcode
             self.pos_X = frame_width/2
-            t_barcode = self.canevas.create_text(self.pos_X, self.pos_Y,text = self.produit.fields['barcode'], fill  = color_product,font = aFont(26))
+            t_barcode = self.canevas.create_text(self.pos_X, self.pos_Y,text = self.produit.fields['barcode'], fill  = color_product,font = size26)
             
             #saut de ligne
             self.saut_de_ligne(40)  
                         
             # prix
             self.pos_X = frame_width/2
-            t_prix = self.canevas.create_text(self.pos_X, self.pos_Y, text = self.produit.fields['price'], fill = color_debit,font = aFont(30))
+            t_prix = self.canevas.create_text(self.pos_X, self.pos_Y, text = self.produit.fields['price'], fill = color_debit,font = size30)
 
             # symbole screen.euro
     ##            self.size(t_prix,"TEXT",1,0 )
     ##            self.pos_X = t_x/2 + self.sizeX/2 #determination en X de la position du Label : ici on centre
             self.euro(t_prix,26)
-                        
+                            
     def tk_scanner(self) :
             self.ensure_tkdisplay()
             # nom
             self.pos_X = frame_width/2
             self.pos_Y = frame_height/2.5
-            t_scanner = self.canevas.create_text(self.pos_X, self.pos_Y, text = self.scanner.id, fill = color_header, font = aFont(20))
+            t_scanner = self.canevas.create_text(self.pos_X, self.pos_Y, text = self.scanner.id, fill = color_header, font = size20)
 
             #saut de ligne
             self.saut_de_ligne(40)
             
             # barcode
             self.pos_X = frame_width/2
-            t_name = self.canevas.create_text(self.pos_X, self.pos_Y,text = self.scanner.fields['name'], fill  = color_product,font = aFont(26))
+            t_name = self.canevas.create_text(self.pos_X, self.pos_Y,text = self.scanner.fields['name'], fill  = color_product,font = size26)
             
             #saut de ligne
             self.saut_de_ligne(40)  
                         
             # pin
             self.pos_X = frame_width/2
-            t_pin = self.canevas.create_text(self.pos_X, self.pos_Y, text = (u"pin="+self.scanner.fields['pin']), fill = color_debit,font = aFont(26))
+            t_pin = self.canevas.create_text(self.pos_X, self.pos_Y, text = (u"pin="+self.scanner.fields['pin']), fill = color_debit,font = size26)
 
             #saut de ligne
             self.saut_de_ligne(40)  
             self.pos_X = frame_width/2
-            t_deny = self.canevas.create_text(self.pos_X, self.pos_Y, text = (u"akuino"+self.scanner.fields['client']), fill = color_debit,font = aFont(30))
+            t_deny = self.canevas.create_text(self.pos_X, self.pos_Y, text = (u"akuino"+self.scanner.fields['client']), fill = color_debit,font = size30)
             #saut de ligne
             self.saut_de_ligne(40)  
             self.pos_X = frame_width/2
-            t_deny = self.canevas.create_text(self.pos_X, self.pos_Y, text = self.scanner.strActive(), fill = color_debit,font = aFont(30))
+            t_deny = self.canevas.create_text(self.pos_X, self.pos_Y, text = self.scanner.strActive(), fill = color_debit,font = size30)
                         
     def tk_utilisateur(self) :
             self.ensure_tkdisplay()
             # nom
             self.pos_X = frame_width/2
             self.pos_Y = frame_height/2.5
-            t_utilisateur = self.canevas.create_text(self.pos_X, self.pos_Y, text = self.utilisateur.fields['name'], fill = color_header, font = aFont(26))
+            t_utilisateur = self.canevas.create_text(self.pos_X, self.pos_Y, text = self.utilisateur.fields['name'], fill = color_header, font = size26)
 
             #saut de ligne
             self.saut_de_ligne(40)
             
             # barcode
             self.pos_X = frame_width/2
-            t_barcode = self.canevas.create_text(self.pos_X, self.pos_Y,text = self.utilisateur.fields['barcode'], fill  = color_product,font = aFont(26))
+            t_barcode = self.canevas.create_text(self.pos_X, self.pos_Y,text = self.utilisateur.fields['barcode'], fill  = color_product,font = size26)
                         
             #saut de ligne
             self.saut_de_ligne(40)
             
             self.pos_X = frame_width/2
-            t_droits = self.canevas.create_text(self.pos_X, self.pos_Y, text = self.utilisateur.getAccessCode(), fill = color_debit,font = aFont(30))
+            t_droits = self.canevas.create_text(self.pos_X, self.pos_Y, text = self.utilisateur.getAccessCode(), fill = color_debit,font = size30)
 
     def tk_facture(self) :
             self.ensure_tkdisplay()
@@ -1501,17 +1819,17 @@ class Contexte (): #threading.Thread
             theGrid = Tkinter.Canvas(self.canevas, width = frame_width-2, height = frame_height-62, bg=color_canevas, bd=1)
             theGrid.place(anchor=Tkinter.N, x=frame_width/2, y = 60)
 
-            name_column = Tkinter.Label(theGrid,text = "TICKET", fg = color_header, bg = color_canevas,font = aFont(22))
+            name_column = Tkinter.Label(theGrid,text = "TICKET", fg = color_header, bg = color_canevas,font = size22)
             name_column.grid(row = 0, column = 0,columnspan = 5, pady=4)
-            name_column = Tkinter.Label(theGrid,text = "Num.", fg = color_header, bg = color_canevas,font = aFont(20))
+            name_column = Tkinter.Label(theGrid,text = "Num.", fg = color_header, bg = color_canevas,font = size20)
             name_column.grid(row = 1, column = 0, pady=2,padx=1)
-            name_column = Tkinter.Label(theGrid,text = "Nom", fg = color_header, bg = color_canevas,font = aFont(20))
+            name_column = Tkinter.Label(theGrid,text = "Nom", fg = color_header, bg = color_canevas,font = size20)
             name_column.grid(row = 1, column = 1, pady=2,padx=1)
-            name_column = Tkinter.Label(theGrid,text = "Qte", fg = color_header,bg = color_canevas,font = aFont(20))
+            name_column = Tkinter.Label(theGrid,text = "Qte", fg = color_header,bg = color_canevas,font = size20)
             name_column.grid(row = 1, column = 2, pady=2,padx=1)
-            name_column = Tkinter.Label(theGrid,text = " €/u ", fg = color_header,bg = color_canevas,font = aFont(20))
+            name_column = Tkinter.Label(theGrid,text = " €/u ", fg = color_header,bg = color_canevas,font = size20)
             name_column.grid(row = 1, column = 3, pady=2,padx=1)
-            name_column = Tkinter.Label(theGrid,text = " € tot", fg = color_header, bg = color_canevas,font = aFont(20))
+            name_column = Tkinter.Label(theGrid,text = " € tot", fg = color_header, bg = color_canevas,font = size20)
             name_column.grid(row = 1, column = 4, pady=2,padx=1)
             for i in range(5):
                 theGrid.columnconfigure(i,weight=1)
@@ -1534,27 +1852,27 @@ class Contexte (): #threading.Thread
                     total = (price * float(self.prev_panier[element]))
                                                    
 
-                    achat = Tkinter.Label(theGrid,text = unicode(index+1), fg = color_index,bg = color_canevas,font = aFont(14))
+                    achat = Tkinter.Label(theGrid,text = unicode(index+1), fg = color_index,bg = color_canevas,font = size14)
                     achat.grid(row = ligne, column = 0, pady=2)
-                    achat = Tkinter.Label(theGrid,text = element.fields["name"][:15], fg = color_header,bg = color_canevas,font = aFont(18))
+                    achat = Tkinter.Label(theGrid,text = element.fields["name"][:15], fg = color_header,bg = color_canevas,font = size18)
                     achat.grid(row = ligne, column = 1, pady=2)
-                    achat = Tkinter.Label(theGrid,text = self.prev_panier[element], fg = color_message,bg = color_canevas,font = aFont(18))
+                    achat = Tkinter.Label(theGrid,text = self.prev_panier[element], fg = color_message,bg = color_canevas,font = size18)
                     bouteilles += self.prev_panier[element]                    
                     achat.grid(row = ligne, column = 2, pady=2)
-                    achat = Tkinter.Label(theGrid,text = element.fields["price"], fg = color_message,bg = color_canevas,font = aFont(18))
+                    achat = Tkinter.Label(theGrid,text = element.fields["price"], fg = color_message,bg = color_canevas,font = size18)
                     achat.grid(row = ligne, column = 3, pady=2)
-                    achat = Tkinter.Label(theGrid,text = total, fg = color_debit,bg = color_canevas,font = aFont(18))
+                    achat = Tkinter.Label(theGrid,text = total, fg = color_debit,bg = color_canevas,font = size18)
                     achat.grid(row = ligne, column = 4, pady=2)
                     index +=1
             total,bouteilles = self.total_panier(self.prev_panier)
             ligne += 1
-            cell = Tkinter.Label(theGrid,text = unicode(len(self.prev_panier)), fg = color_index,bg = color_canevas,font = aFont(18))
+            cell = Tkinter.Label(theGrid,text = unicode(len(self.prev_panier)), fg = color_index,bg = color_canevas,font = size18)
             cell.grid(row = ligne, column = 0, pady=2)
-            cell = Tkinter.Label(theGrid,text = "TOTAL", fg = color_message,bg = color_canevas,font = aFont(18))
+            cell = Tkinter.Label(theGrid,text = "TOTAL", fg = color_message,bg = color_canevas,font = size18)
             cell.grid(row = ligne, column = 1, pady=2)
-            cell = Tkinter.Label(theGrid,text = unicode(bouteilles), fg = color_message,bg = color_canevas,font = aFont(18))
+            cell = Tkinter.Label(theGrid,text = unicode(bouteilles), fg = color_message,bg = color_canevas,font = size18)
             cell.grid(row = ligne, column = 2, pady=2)
-            cell = Tkinter.Label(theGrid,text = unicode(total), fg = color_debit,bg = color_canevas,font = aFont(18))
+            cell = Tkinter.Label(theGrid,text = unicode(total), fg = color_debit,bg = color_canevas,font = size18)
             cell.grid(row = ligne, column = 4, pady=2)
     
     def tk_stock(self,all_stock):
@@ -1563,17 +1881,28 @@ class Contexte (): #threading.Thread
             theGrid = Tkinter.Canvas(self.canevas, width = frame_width-2, height = frame_height-62, bg=color_canevas, bd=1)
             theGrid.place(anchor=Tkinter.N, x=frame_width/2, y = 60)
 
-            name_column = Tkinter.Label(theGrid,text = "PRODUITS", fg = color_header, bg = color_canevas,font = aFont(22))
-            name_column.grid(row = 0, column = 0,columnspan = 6, pady=4)
-            name_column = Tkinter.Label(theGrid,text = "Barcode", fg = color_header, bg = color_canevas,font = aFont(20))
-            name_column.grid(row = 1, column = 1, pady=2,padx=4)
-            name_column = Tkinter.Label(theGrid,text = "Nom", fg = color_header, bg = color_canevas,font = aFont(20))
-            name_column.grid(row = 1, column = 2, pady=2,padx=4)
-            name_column = Tkinter.Label(theGrid,text = "€/u", fg = color_header,bg = color_canevas,font = aFont(20))
-            name_column.grid(row = 1, column = 3, pady=2,padx=4)
-            name_column = Tkinter.Label(theGrid,text = " Qty ", fg = color_header,bg = color_canevas,font = aFont(20))
-            name_column.grid(row = 1, column = 4, pady=2,padx=4)
-      
+            if brace_type == 0:
+                name_column = Tkinter.Label(theGrid,text = "PRODUITS", fg = color_header, bg = color_canevas,font = size22)
+                name_column.grid(row = 0, column = 0,columnspan = 6, pady=4)
+                name_column = Tkinter.Label(theGrid,text = "Barcode", fg = color_header, bg = color_canevas,font = size20)
+                name_column.grid(row = 1, column = 1, pady=2,padx=4)
+                name_column = Tkinter.Label(theGrid,text = "Nom", fg = color_header, bg = color_canevas,font = size20)
+                name_column.grid(row = 1, column = 2, pady=2,padx=4)
+                name_column = Tkinter.Label(theGrid,text = "€/u", fg = color_header,bg = color_canevas,font = size20)
+                name_column.grid(row = 1, column = 3, pady=2,padx=4)
+                name_column = Tkinter.Label(theGrid,text = " Qty ", fg = color_header,bg = color_canevas,font = size20)
+                name_column.grid(row = 1, column = 4, pady=2,padx=4)
+
+            elif brace_type ==1:
+                name_column = Tkinter.Label(theGrid,text = "PRODUITS", fg = color_header, bg = color_canevas,font = size22)
+                name_column.grid(row = 0, column = 0,columnspan = 6, pady=4)
+                name_column = Tkinter.Label(theGrid,text = "Nom", fg = color_header, bg = color_canevas,font = size20)
+                name_column.grid(row = 1, column = 2, pady=2,padx=4)
+                name_column = Tkinter.Label(theGrid,text = "€/u", fg = color_header,bg = color_canevas,font = size20)
+                name_column.grid(row = 1, column = 3, pady=2,padx=4)
+                name_column = Tkinter.Label(theGrid,text = " Qty ", fg = color_header,bg = color_canevas,font = size20)
+                name_column.grid(row = 1, column = 4, pady=2,padx=4)
+            
             print "Votre Stock : "
             ligne = 5
             if all_stock :
@@ -1584,17 +1913,29 @@ class Contexte (): #threading.Thread
                 objet = c.AllProducts.elements[key]
                 ligne += 1
                 print objet.fields['barcode'] + " " + objet.fields['name'] + " " + objet.fields['price'] + " " + objet.fields['qty']
-                
-                produit = Tkinter.Label(theGrid,text = " ABCDEFGHIJKL"[ligne-5], fg = color_header,bg = color_canevas,font = aFont(20))
-                produit.grid(row = ligne, column = 0, pady=2,padx=4)
-                produit = Tkinter.Label(theGrid,text = objet.fields['barcode'], fg = color_product,bg = color_canevas,font = aFont(16))
-                produit.grid(row = ligne, column = 1, pady=2,padx=4)
-                produit = Tkinter.Label(theGrid,text = objet.fields['name'][:15], fg = color_header,bg = color_canevas,font = aFont(18))
-                produit.grid(row = ligne, column = 2, pady=2,padx=4)
-                produit = Tkinter.Label(theGrid,text = objet.fields["price"], fg = color_debit,bg = color_canevas,font = aFont(18))
-                produit.grid(row = ligne, column = 3, pady=2,padx=4)
-                produit = Tkinter.Label(theGrid,text = objet.fields["qty"], fg = color_message,bg = color_canevas,font = aFont(18))
-                produit.grid(row = ligne, column = 4, pady=2,padx=4)
+
+                if brace_type == 0:
+                    produit = Tkinter.Label(theGrid,text = " ABCDEFGHIJKL"[ligne-5], fg = color_header,bg = color_canevas,font = size20)
+                    produit.grid(row = ligne, column = 0, pady=2,padx=4)
+                    produit = Tkinter.Label(theGrid,text = objet.fields['barcode'], fg = color_product,bg = color_canevas,font = size16)
+                    produit.grid(row = ligne, column = 1, pady=2,padx=4)
+                    produit = Tkinter.Label(theGrid,text = objet.fields['name'][:15], fg = color_header,bg = color_canevas,font = size18)
+                    produit.grid(row = ligne, column = 2, pady=2,padx=4)
+                    produit = Tkinter.Label(theGrid,text = objet.fields["price"], fg = color_debit,bg = color_canevas,font = size18)
+                    produit.grid(row = ligne, column = 3, pady=2,padx=4)
+                    produit = Tkinter.Label(theGrid,text = objet.fields["qty"], fg = color_message,bg = color_canevas,font = size18)
+                    produit.grid(row = ligne, column = 4, pady=2,padx=4)
+
+                elif brace_type ==1:
+                    produit = Tkinter.Label(theGrid,text = " ABCDEFGHIJKL"[ligne-5], fg = color_header,bg = color_canevas,font = size20)
+                    produit.grid(row = ligne, column = 0, pady=2,padx=4)
+                    produit = Tkinter.Label(theGrid,text = objet.fields['name'][:15], fg = color_header,bg = color_canevas,font = size18)
+                    produit.grid(row = ligne, column = 2, pady=2,padx=4)
+                    produit = Tkinter.Label(theGrid,text = objet.fields["price"], fg = color_debit,bg = color_canevas,font = size18)
+                    produit.grid(row = ligne, column = 3, pady=2,padx=4)
+                    produit = Tkinter.Label(theGrid,text = objet.fields["qty"], fg = color_message,bg = color_canevas,font = size18)
+                    produit.grid(row = ligne, column = 4, pady=2,padx=4)
+
                     
     def tk_collaborateurs(self,all_collabs):
             self.ensure_tkdisplay()
@@ -1602,13 +1943,13 @@ class Contexte (): #threading.Thread
             theGrid = Tkinter.Canvas(self.canevas, width = frame_width-2, height = frame_height-62, bg=color_canevas, bd=1)
             theGrid.place(anchor=Tkinter.N, x=frame_width/2, y = 60)
 
-            name_column = Tkinter.Label(theGrid,text = "COLLABS", fg = color_header, bg = color_canevas,font = aFont(22))
+            name_column = Tkinter.Label(theGrid,text = "COLLABS", fg = color_header, bg = color_canevas,font = size22)
             name_column.grid(row = 0, column = 0,columnspan = 5, pady=4)
-            name_column = Tkinter.Label(theGrid,text = "Barcode", fg = color_header, bg = color_canevas,font = aFont(20))
+            name_column = Tkinter.Label(theGrid,text = "Barcode", fg = color_header, bg = color_canevas,font = size20)
             name_column.grid(row = 1, column = 1, pady=2,padx=4)
-            name_column = Tkinter.Label(theGrid,text = "Nom", fg = color_header, bg = color_canevas,font = aFont(20))
+            name_column = Tkinter.Label(theGrid,text = "Nom", fg = color_header, bg = color_canevas,font = size20)
             name_column.grid(row = 1, column = 2, pady=2,padx=4)
-            name_column = Tkinter.Label(theGrid,text = "Accès", fg = color_header,bg = color_canevas,font = aFont(20))
+            name_column = Tkinter.Label(theGrid,text = "Accès", fg = color_header,bg = color_canevas,font = size20)
             name_column.grid(row = 1, column = 3, pady=2,padx=4)
       
             print "Vos collaborateurs : "
@@ -1622,13 +1963,13 @@ class Contexte (): #threading.Thread
                 ligne += 1
                 print objet.fields['barcode'] + " " + objet.fields['name'] + " " + objet.fields['access']
                 
-                produit = Tkinter.Label(theGrid,text = " ABCDEFGHIJKL"[ligne-5], fg = color_header,bg = color_canevas,font = aFont(20))
+                produit = Tkinter.Label(theGrid,text = " ABCDEFGHIJKL"[ligne-5], fg = color_header,bg = color_canevas,font = size20)
                 produit.grid(row = ligne, column = 0, pady=2,padx=4)
-                produit = Tkinter.Label(theGrid,text = objet.fields['barcode'], fg = color_product,bg = color_canevas,font = aFont(16))
+                produit = Tkinter.Label(theGrid,text = objet.fields['barcode'], fg = color_product,bg = color_canevas,font = size16)
                 produit.grid(row = ligne, column = 1, pady=2,padx=4)
-                produit = Tkinter.Label(theGrid,text = objet.fields['name'][:15], fg = color_header,bg = color_canevas,font = aFont(18))
+                produit = Tkinter.Label(theGrid,text = objet.fields['name'][:15], fg = color_header,bg = color_canevas,font = size18)
                 produit.grid(row = ligne, column = 2, pady=2,padx=4)
-                produit = Tkinter.Label(theGrid,text = objet.fields["access"], fg = color_debit,bg = color_canevas,font = aFont(18))
+                produit = Tkinter.Label(theGrid,text = objet.fields["access"], fg = color_debit,bg = color_canevas,font = size18)
                 produit.grid(row = ligne, column = 3, pady=2,padx=4)
         
     def tk_scanners(self,all_scans):
@@ -1637,15 +1978,15 @@ class Contexte (): #threading.Thread
             theGrid = Tkinter.Canvas(self.canevas, width = frame_width-2, height = frame_height-62, bg=color_canevas, bd=1)
             theGrid.place(anchor=Tkinter.N, x=frame_width/2, y = 60)
 
-            name_column = Tkinter.Label(theGrid,text = "SCANNERS", fg = color_header, bg = color_canevas,font = aFont(22))
+            name_column = Tkinter.Label(theGrid,text = "SCANNERS", fg = color_header, bg = color_canevas,font = size22)
             name_column.grid(row = 0, column = 0,columnspan = 5, pady=4)
-            name_column = Tkinter.Label(theGrid,text = "akuino", fg = color_header, bg = color_canevas,font = aFont(20))
+            name_column = Tkinter.Label(theGrid,text = "akuino", fg = color_header, bg = color_canevas,font = size20)
             name_column.grid(row = 1, column = 1, pady=2,padx=4)
-            name_column = Tkinter.Label(theGrid,text = "Nom", fg = color_header, bg = color_canevas,font = aFont(20))
+            name_column = Tkinter.Label(theGrid,text = "Nom", fg = color_header, bg = color_canevas,font = size20)
             name_column.grid(row = 1, column = 2, pady=2,padx=4)
-            name_column = Tkinter.Label(theGrid,text = "PIN", fg = color_header,bg = color_canevas,font = aFont(20))
+            name_column = Tkinter.Label(theGrid,text = "PIN", fg = color_header,bg = color_canevas,font = size20)
             name_column.grid(row = 1, column = 3, pady=2,padx=4)
-            name_column = Tkinter.Label(theGrid,text = "MAC", fg = color_header, bg = color_canevas,font = aFont(18))
+            name_column = Tkinter.Label(theGrid,text = "MAC", fg = color_header, bg = color_canevas,font = size18)
             name_column.grid(row = 1, column = 4, pady=2,padx=4)
       
             print "Vos scanners : "
@@ -1659,15 +2000,15 @@ class Contexte (): #threading.Thread
                 ligne += 1
                 print objet.id + " " + objet.fields['name'] + " " + objet.fields['pin']
                 
-                produit = Tkinter.Label(theGrid,text = " ABCDEFGHIJKL"[ligne-5], fg = color_header,bg = color_canevas,font = aFont(20))
+                produit = Tkinter.Label(theGrid,text = " ABCDEFGHIJKL"[ligne-5], fg = color_header,bg = color_canevas,font = size20)
                 produit.grid(row = ligne, column = 0, pady=2,padx=4)
-                produit = Tkinter.Label(theGrid,text = objet.fields["client"], fg = color_debit,bg = color_canevas,font = aFont(18))
+                produit = Tkinter.Label(theGrid,text = objet.fields["client"], fg = color_debit,bg = color_canevas,font = size18)
                 produit.grid(row = ligne, column = 1, pady=2,padx=4)
-                produit = Tkinter.Label(theGrid,text = objet.fields['name'][:15], fg = color_header,bg = color_canevas,font = aFont(18))
+                produit = Tkinter.Label(theGrid,text = objet.fields['name'][:15], fg = color_header,bg = color_canevas,font = size18)
                 produit.grid(row = ligne, column = 2, pady=2,padx=4)
-                produit = Tkinter.Label(theGrid,text = objet.fields["pin"], fg = color_debit,bg = color_canevas,font = aFont(18))
+                produit = Tkinter.Label(theGrid,text = objet.fields["pin"], fg = color_debit,bg = color_canevas,font = size18)
                 produit.grid(row = ligne, column = 3, pady=2,padx=4)
-                produit = Tkinter.Label(theGrid,text = objet.id, fg = color_product,bg = color_canevas,font = aFont(14))
+                produit = Tkinter.Label(theGrid,text = objet.id, fg = color_product,bg = color_canevas,font = size14)
                 produit.grid(row = ligne, column = 4, pady=2,padx=4)
 
     def sauver_utilisateur(self):
@@ -1807,7 +2148,7 @@ class Contexte (): #threading.Thread
                 else:
                     self.panier[self.produit] = self.qty_choisie
             self.prev_panier = self.panier
-                
+            
             #print self.panier
             #print self.liste_panier
             self.setQty(-1)
@@ -1877,6 +2218,7 @@ class Contexte (): #threading.Thread
                     
                 if hardConf.running:
                     PIG.write(hardConf.running, 1)
+                self.inputQueue.task_done()
         except:
             #print self.rank
             pass
@@ -1886,6 +2228,7 @@ class Contexte (): #threading.Thread
         try :
             if (self.user != None) :
                 #determination du mode
+                    print 'res : ' + res
                     if res in modes :                    # il faudra tester si l'utilisateur peut accéder à ce mode
                         
                         if res == CB_User_Cancel :
@@ -1986,6 +2329,19 @@ class Contexte (): #threading.Thread
                                 generer_produit(self)
                             elif self.mode == CB_Collabs:
                                 generer_utilisateur(self)
+                        elif (action == CB_Creer_Sans_Barcode):
+                            if self.mode == CB_Vente_Bracelets:
+                                self.client=c.AllBraces.generateBarcode()
+                                if self.client:
+                                    ecran_client(self)
+                            elif self.mode == CB_Stock:
+                                self.produit=c.AllProducts.generateBarcode()
+                                if self.produit:
+                                    ecran_produit(self)
+                            elif self.mode == CB_Collabs:
+                                self.utilisateur=c.AllUsers.generateBarcode()
+                                if self.utilisateur:
+                                    ecran_utilisateur(self)
                         elif (action == CB_Initialiser):
                             if self.mode == CB_Vente_Bracelets:
                                 ecran_sync_printer(self)
@@ -2139,6 +2495,16 @@ class Contexte (): #threading.Thread
             
             if self.user != None :
                 if self.command_interpreter(res):
+                    return
+
+            if unicode(res).isnumeric():
+                val = int(res)
+                if (val >= CB_Base_Nombre) and (val < CB_Base_Nombre+1000000):
+                    val = val - CB_Base_Nombre
+                    self.setQty(val)
+                    self.qty_choisie = val
+                    if self.mode == CB_Vente_Produits:
+                        self.produit = None # plus de produit courant si on entre une quantité
                     return
                 
             # If client/server, ensure the barcode is categorised
@@ -2330,8 +2696,9 @@ def insureContext(aScannerKey):
             return None
     else:
         return None
-    
-threadBlueTooth,threadBluetoothEnQueue = bluetooth.start()
+
+if brace_type == 0:    
+    threadBlueTooth,threadBluetoothEnQueue = bluetooth.start()
 
 # classe qui lance un thread de gestion du code barre par appareil, cette fonction se charge aussi de mettre les codes barres receuillis dans une queue
 class InputEventThread(threading.Thread):
@@ -2339,7 +2706,7 @@ class InputEventThread(threading.Thread):
     def __init__(self,currentScanner):
         threading.Thread.__init__(self)
         self.currScanner = currentScanner
-        self.dev = evdev.InputDevice("/dev/input/event"+unicode(self.currScanner.numDev))
+        #self.dev = evdev.InputDevice("/dev/input/event"+unicode(self.currScanner.numDev))
         self.Alive = False
         
     def run(self):
@@ -2439,6 +2806,11 @@ def InputListThread():
     global screen
     global Alive
     global bluetoothScanner
+
+    global screen_type
+    
+    #if screen_type !=0:
+        
     
 # UTILISER /proc/bus/input/devices
     physical = None
@@ -2459,6 +2831,8 @@ def InputListThread():
                     physical = inputLine[8:].strip()
                 elif inputLine[:12] == 'H: Handlers=':
                     for capab in inputLine[12:].strip().split(' '):
+                        if (capab[:5] == 'sysrq') and (physical==""):
+                            physical='AFANDBARCODE'
                         if capab[:5] == 'event':
                             numDev = int(capab[5:])
                             if physical:
@@ -2480,7 +2854,7 @@ def InputListThread():
                                                 currScanner.reader = InputEventThread(currScanner)
                                             else:
                                                 continue # Thread still alive
-                                            currScanner.reader.start()
+                                            #currScanner.reader.start()
 
                                             if hardConf.oled:
                                                 if not somethingDisplayed:
@@ -2742,6 +3116,8 @@ def execThreads():
         if aContext:
             aContext.run_ounce()
     if Alive:
+        if contexte_unique:
+            ListeGauche()
         tkdisplay_root.after(100, execThreads )
     else:
         tkdisplay_root.destroy()

@@ -933,6 +933,7 @@ class Scanner(ConfigurationObject):
     def __str__(self):
         string = u"\nScanner #"+str(self.id)
         for field in self.fields:
+	  if field :
             if self.fields[field]:
                 string = string + u"\n" + field + u" : " + self.fields[field]
         return string + u"\n"
@@ -948,10 +949,12 @@ class Scanner(ConfigurationObject):
         global c
 
         client = self.fields[u"client"]
+
         if self.id == "AFANDBARCODE":
             if client and (len(client) > 1):
                 client = c.barbaraConfig.akuinoHost
                 self.fields[u'client'] = client
+
 
 ##        if denial:
 ##            denial = denial[0].lower()
