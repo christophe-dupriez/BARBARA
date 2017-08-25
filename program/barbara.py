@@ -1099,8 +1099,8 @@ ticket_barcode=[1000000012019,1000000012026,1000000012033,1000000012040,10000000
 
 liste_barcode=[1000000012019,1000000012026,1000000012033,1000000012040,1000000012057,1000000012064,1000000012071,1000000012088,1000000012095]
 
-fonction_vente_bracelets=[]
-fonction_vente_bracelets_barcode=[]
+fonction_vente_bracelets=[u"Paiement par Cash", u"Paiement par Carte"]
+fonction_vente_bracelets_barcode=[1000000010015,1000000010022]
 
 fonction_vente_produits=[u"Ticket 1",u"Ticket 2",u"Ticket 3",u"Ticket 4"]
 fonction_vente_produits_barcode=[1000000011111,1000000011128,1000000011135,1000000011142]
@@ -1167,20 +1167,29 @@ def touch(fonction,chiffre):
         contexte_unique.listeGauche = 1
         contexte_unique.listeGaucheNow = (str(barcode) != CB_Gestion) and (str(barcode) != CB_Vente_Bracelets)
         if str(barcode)==CB_Vente_Bracelets:
-            choice("point")
+			contexte_unique.mode = CB_Vente_Bracelets
+			choice(u"point")
         elif str(barcode)==CB_Vente_Produits:
-            choice("liste")
-        elif str(barcode)==CB_Collabs :
-            choice("plus")
+			#contexte_unique.mode = CB_Vente_Produits
+			choice(u"liste")
+        elif str(barcode)==CB_Collabs:
+			contexte_unique.mode = CB_Collabs
+			choice(u"liste")
         elif str(barcode)==CB_Stock:
-            choice("plus")
+			#contexte_unique.mode = CB_Stock
+			choice(u"liste")
         elif str(barcode)==CB_Scanners:
-            choice("plus")
+			contexte_unique.mode = CB_Scanners
+			choice(u"liste")
         elif str(barcode)==CB_Gestion:
-           choice("fonction")
+			contexte_unique.mode = CB_Gestion
+			choice(u"fonction")
     elif fonction==u"liste":
-        barcode=liste_barcode[chiffre]
-        contexte_unique.inputQueue.put(str(barcode))      
+		if contexte_unique.mode == CB_Vente_Produits:
+			contexte_unique.inputQueue.put(chiffre)
+		elif contexte_unique.mode == CB_Stock:
+			barcode=liste_barcode[chiffre]
+			contexte_unique.inputQueue.put(str(barcode))      
     elif fonction==u"ticket":
         barcode=ticket_barcode[chiffre]
         contexte_unique.inputQueue.put(str(barcode))
@@ -1190,6 +1199,9 @@ def touch(fonction,chiffre):
         barcode=principal_barcode[chiffre]
         if str(barcode)==CB_Vente_Produits:
             barcode=fonction_vente_produits_barcode[chiffre]
+            contexte_unique.inputQueue.put(str(barcode))
+        elif str(barcode)==CB_Vente_Bracelets:
+            barcode=fonction_vente_bracelets_barcode[chiffre]
             contexte_unique.inputQueue.put(str(barcode))
         elif str(barcode)==CB_Collabs :
             barcode=fonction_utilisateurs_barcode[chiffre]
@@ -1201,15 +1213,24 @@ def touch(fonction,chiffre):
 def Principal():
     global CentralMenu
     for key in range(len(principal)):
-        texte=""+str(key)+" "+principal[key]
+        texte=""+str(key+1)+" "+principal[key]
         Tkinter.Button(CentralMenu,text=texte,bg=color_principal,fg=color_texte,font=size26,anchor=Tkinter.W,command=lambda key=key:touch("principal",key)).pack(fill=Tkinter.X,expand=1,side=Tkinter.TOP)
 
 def Liste():
     global CentralMenu, contexte_unique
-    if (contexte_unique.mode == CB_Stock) or (contexte_unique.mode==CB_Vente_Produits):
+    chiffre=0
+    if (contexte_unique.mode==CB_Vente_Produits):
         refset = c.AllProducts.elements.keys()[contexte_unique.debut : contexte_unique.debut+TAILLE_ECRAN]
         produit={}
-        chiffre=0
+        for key in refset:
+            objet = c.AllProducts.elements[key]
+            texte = objet.fields[u'price'] + u" € | " + objet.fields[u'name'] + u" "
+            produit[chiffre]=objet.fields[u'barcode']
+            Tkinter.Button(CentralMenu,text=texte,bg=color_liste,fg=color_texte,font=size15,anchor=Tkinter.W,command=lambda chiffre=chiffre:touch("liste",produit[chiffre])).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
+            chiffre+=1
+    if (contexte_unique.mode == CB_Stock):
+        refset = c.AllProducts.elements.keys()[contexte_unique.debut : contexte_unique.debut+TAILLE_ECRAN]
+        produit={}
         for key in refset:
             objet = c.AllProducts.elements[key]
             texte = objet.fields[u'price'] + u" € | " + objet.fields[u'name'] + u" "
@@ -1219,7 +1240,6 @@ def Liste():
     elif(contexte_unique.mode == CB_Collabs):
         refset = c.AllUsers.elements.keys()[contexte_unique.debut : contexte_unique.debut+TAILLE_ECRAN]
         user={}
-        chiffre=0
         for key in refset:
             objet = c.AllUsers.elements[key]
             texte = objet.fields[u'name'] + u" | " + objet.fields[u'access'] + u" "
@@ -1228,7 +1248,6 @@ def Liste():
             chiffre+=1
     elif (contexte_unique.mode == CB_Scanners):
         scan={}
-        chiffre=0
         refset = c.AllScanners.elements.keys()[contexte_unique.debut : contexte_unique.debut+TAILLE_ECRAN]
         for key in refset:
             objet = c.AllScanners.elements[key]
@@ -1240,7 +1259,7 @@ def Liste():
 def Ticket():
     global CentralMenu
     for key in range(len(ticket)):
-        texte=""+str(key)+" "+ticket[key]
+        texte=""+str(key+1)+" "+ticket[key]
         Tkinter.Button(CentralMenu,text=texte,bg=color_ticket,fg=color_texte,font=size14,anchor=Tkinter.W,padx=0,pady=0,command=lambda key=key:touch("ticket",key)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
 
 def ListeGauche():
@@ -1257,16 +1276,20 @@ def Fonction():
     print contexte_unique.mode
     if contexte_unique.mode == CB_Vente_Produits:
         for key in range(len(fonction_vente_produits)):
-            texte=""+str(key)+" "+fonction_vente_produits[key]
-            Tkinter.Button(CentralMenu,text=texte,bg=color_fonction,fg=color_texte,font=size14,anchor=Tkinter.W,padx=0,pady=0,command=lambda key=key:touch("fonction",key)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
+            texte=""+str(key+1)+" "+fonction_vente_produits[key]
+            Tkinter.Button(CentralMenu,text=texte,bg=color_fonction,fg=color_texte,font=size15,anchor=Tkinter.W,padx=0,pady=0,command=lambda key=key:touch("fonction",key)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
+    if contexte_unique.mode == CB_Vente_Bracelets:
+        for key in range(len(fonction_vente_bracelets)):
+            texte=""+str(key+1)+" "+fonction_vente_bracelets[key]
+            Tkinter.Button(CentralMenu,text=texte,bg=color_fonction,fg=color_texte,font=size15,anchor=Tkinter.W,padx=0,pady=0,command=lambda key=key:touch("fonction",key)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
     elif contexte_unique.mode == CB_Collabs:
         for key in range(len(fonction_utilisateurs)):
-            texte=""+str(key)+" "+fonction_utilisateurs[key]
-            Tkinter.Button(CentralMenu,text=texte,bg=color_fonction,fg=color_texte,font=size14,anchor=Tkinter.W,padx=0,pady=0,command=lambda key=key:touch("fonction",key)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
+            texte=""+str(key+1)+" "+fonction_utilisateurs[key]
+            Tkinter.Button(CentralMenu,text=texte,bg=color_fonction,fg=color_texte,font=size15,anchor=Tkinter.W,padx=0,pady=0,command=lambda key=key:touch("fonction",key)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
     elif contexte_unique.mode == CB_Gestion:
         for key in range(len(fonction_gestion)):
-            texte=""+str(key)+" "+fonction_gestion[key]
-            Tkinter.Button(CentralMenu,text=texte,bg=color_fonction,fg=color_texte,font=size14,anchor=Tkinter.W,padx=0,pady=0,command=lambda key=key:touch("fonction",key)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)        
+            texte=""+str(key+1)+" "+fonction_gestion[key]
+            Tkinter.Button(CentralMenu,text=texte,bg=color_fonction,fg=color_texte,font=size15,anchor=Tkinter.W,padx=0,pady=0,command=lambda key=key:touch("fonction",key)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)        
 
 def Point():
     global x
@@ -1963,15 +1986,26 @@ class Contexte (): #threading.Thread
                 ligne += 1
                 print objet.fields['barcode'] + " " + objet.fields['name'] + " " + objet.fields['access']
                 
-                produit = Tkinter.Label(theGrid,text = " ABCDEFGHIJKL"[ligne-5], fg = color_header,bg = color_canevas,font = size20)
-                produit.grid(row = ligne, column = 0, pady=2,padx=4)
-                produit = Tkinter.Label(theGrid,text = objet.fields['barcode'], fg = color_product,bg = color_canevas,font = size16)
-                produit.grid(row = ligne, column = 1, pady=2,padx=4)
-                produit = Tkinter.Label(theGrid,text = objet.fields['name'][:15], fg = color_header,bg = color_canevas,font = size18)
-                produit.grid(row = ligne, column = 2, pady=2,padx=4)
-                produit = Tkinter.Label(theGrid,text = objet.fields["access"], fg = color_debit,bg = color_canevas,font = size18)
-                produit.grid(row = ligne, column = 3, pady=2,padx=4)
-        
+                if brace_type == 0:
+					produit = Tkinter.Label(theGrid,text = " ABCDEFGHIJKL"[ligne-5], fg = color_header,bg = color_canevas,font = size20)
+					produit.grid(row = ligne, column = 0, pady=2,padx=4)
+					produit = Tkinter.Label(theGrid,text = objet.fields['barcode'], fg = color_product,bg = color_canevas,font = size16)
+					produit.grid(row = ligne, column = 1, pady=2,padx=4)
+					produit = Tkinter.Label(theGrid,text = objet.fields['name'][:15], fg = color_header,bg = color_canevas,font = size18)
+					produit.grid(row = ligne, column = 2, pady=2,padx=4)
+					produit = Tkinter.Label(theGrid,text = objet.fields["access"], fg = color_debit,bg = color_canevas,font = size18)
+					produit.grid(row = ligne, column = 3, pady=2,padx=4)
+					
+                elif brace_type == 1:
+					produit = Tkinter.Label(theGrid,text = " ABCDEFGHIJKL"[ligne-5], fg = color_header,bg = color_canevas,font = size20)
+					produit.grid(row = ligne, column = 0, pady=2,padx=4)
+					produit = Tkinter.Label(theGrid,text = objet.fields['barcode'], fg = color_product,bg = color_canevas,font = size16)
+					produit.grid(row = ligne, column = 1, pady=2,padx=4)
+					produit = Tkinter.Label(theGrid,text = objet.fields['name'][:15], fg = color_header,bg = color_canevas,font = size18)
+					produit.grid(row = ligne, column = 2, pady=2,padx=4)
+					produit = Tkinter.Label(theGrid,text = objet.fields["access"], fg = color_debit,bg = color_canevas,font = size18)
+					produit.grid(row = ligne, column = 3, pady=2,padx=4)
+					
     def tk_scanners(self,all_scans):
             self.ensure_tkdisplay()
 
