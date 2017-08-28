@@ -1099,17 +1099,17 @@ ticket_barcode=[1000000012019,1000000012026,1000000012033,1000000012040,10000000
 
 liste_barcode=[1000000012019,1000000012026,1000000012033,1000000012040,1000000012057,1000000012064,1000000012071,1000000012088,1000000012095]
 
-fonction_vente_bracelets=[u"Paiement par Cash", u"Paiement par Carte"]
-fonction_vente_bracelets_barcode=[1000000010015,1000000010022]
+fonction_vente_bracelets=[u"Ajouter Bracelet",u"Paiement par Cash", u"Paiement par Carte"]
+fonction_vente_bracelets_barcode=[1000000010107,1000000010015,1000000010022]
 
-fonction_vente_produits=[u"Ticket 1",u"Ticket 2",u"Ticket 3",u"Ticket 4"]
-fonction_vente_produits_barcode=[1000000011111,1000000011128,1000000011135,1000000011142]
+fonction_vente_produits=[u"Ajouter/Retirer"]
+fonction_vente_produits_barcode=[1000000010046]
 
-fonction_utilisateurs=[u"Droits VB",u"Droits VP",u"Droits G",u"Effacer Nombre"]
-fonction_utilisateurs_barcode=[1000000000016,1000000000207,1000000009002,1000000011098]
+fonction_utilisateurs=[u"Ajouter Collaborateur",u"Retirer Collaborateur",u"Droits VB",u"Droits VP",u"Droits G",u"Effacer Nombre",u"Sauvegarder"]
+fonction_utilisateurs_barcode=[1000000010107,1000000010046,1000000000016,1000000000207,1000000009002,1000000011098,1000000010015]
 
-fonction_produits=[]
-fonction_produits_barcode=[]
+fonction_produits=[u"Ajouter Produit",u"Retirer Produit",u"Sauvegarder"]
+fonction_produits_barcode=[1000000010107,1000000010046,1000000010015]
 
 fonction_scanners=[]
 fonction_scanners_barcode=[]
@@ -1137,7 +1137,9 @@ def choice(demande):
     global contexte_unique
     destroy_frame()
     if demande==u"menu":
+        contexte_unique.mode=None
         Principal()
+        Contexte.build_tkdisplay(contexte_unique)
     elif demande==u"fonction":
         Fonction()
     elif demande==u"ticket":
@@ -1147,9 +1149,13 @@ def choice(demande):
         contexte_unique.listeGauche = 1        
         contexte_unique.listeGaucheNow = True
     elif demande==u"plus":
-        contexte_unique.inputQueue.put(CB_Suivant)
-        contexte_unique.listeGauche = 1
-        contexte_unique.listeGaucheNow = True
+		contexte_unique.inputQueue.put(CB_Suivant)
+		if contexte_unique.mode == CB_Vente_Produits:
+			contexte_unique.listeGauche = 2
+			contexte_unique.listeGaucheNow = True
+		else :
+			contexte_unique.listeGauche = 1
+			contexte_unique.listeGaucheNow = True
     elif demande==u"moins":
         contexte_unique.inputQueue.put(CB_Precedent)
         contexte_unique.listeGaucheNow = True
@@ -1170,13 +1176,11 @@ def touch(fonction,chiffre):
 			contexte_unique.mode = CB_Vente_Bracelets
 			choice(u"point")
         elif str(barcode)==CB_Vente_Produits:
-			#contexte_unique.mode = CB_Vente_Produits
 			choice(u"liste")
         elif str(barcode)==CB_Collabs:
 			contexte_unique.mode = CB_Collabs
 			choice(u"liste")
         elif str(barcode)==CB_Stock:
-			#contexte_unique.mode = CB_Stock
 			choice(u"liste")
         elif str(barcode)==CB_Scanners:
 			contexte_unique.mode = CB_Scanners
@@ -1187,14 +1191,16 @@ def touch(fonction,chiffre):
     elif fonction==u"liste":
 		if contexte_unique.mode == CB_Vente_Produits:
 			contexte_unique.inputQueue.put(chiffre)
-		elif contexte_unique.mode == CB_Stock:
+		elif contexte_unique.mode == CB_Stock or contexte_unique.mode == CB_Collabs or contexte_unique.mode == CB_Scanners:
 			barcode=liste_barcode[chiffre]
 			contexte_unique.inputQueue.put(str(barcode))      
     elif fonction==u"ticket":
-        barcode=ticket_barcode[chiffre]
-        contexte_unique.inputQueue.put(str(barcode))
-        contexte_unique.listeGauche = 2
-        contexte_unique.listeGaucheNow = (str(barcode) != CB_Gestion) and (str(barcode) != CB_Vente_Bracelets)
+		refset = c.AllProducts.elements.keys()
+		for key in refset:
+			objet = c.AllProducts.elements[key]
+			if chiffre in objet.fields[u'name']:
+				barcode = objet.fields[u'barcode']
+				contexte_unique.inputQueue.put(str(barcode)) 
     elif fonction==u"fonction":
         barcode=principal_barcode[chiffre]
         if str(barcode)==CB_Vente_Produits:
@@ -1251,16 +1257,21 @@ def Liste():
         refset = c.AllScanners.elements.keys()[contexte_unique.debut : contexte_unique.debut+TAILLE_ECRAN]
         for key in refset:
             objet = c.AllScanners.elements[key]
-            texte = objet.fields['name'] + " " + objet.fields['pin']
+            texte = objet.fields['name'] + u" | " + objet.fields['pin']
             scan[key]=chiffre
             Tkinter.Button(CentralMenu,text=texte,bg=color_liste,fg=color_texte,font=size15,anchor=Tkinter.W,command=lambda key=key:touch("liste",scan[key])).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
             chiffre+=1
 
 def Ticket():
     global CentralMenu
-    for key in range(len(ticket)):
-        texte=""+str(key+1)+" "+ticket[key]
-        Tkinter.Button(CentralMenu,text=texte,bg=color_ticket,fg=color_texte,font=size14,anchor=Tkinter.W,padx=0,pady=0,command=lambda key=key:touch("ticket",key)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
+    chiffre=0
+    produit={}
+    for element in contexte_unique.prev_panier.keys() [contexte_unique.debut : contexte_unique.debut+TAILLE_ECRAN]:
+		price = element.getCents()/100.0 #on met le prix en float
+		texte = str(contexte_unique.prev_panier[element]) + " " + element.fields[u"name"][:15] + u" | " + str(element.fields[u"price"])
+		produit[chiffre]=element.fields[u'name'][:15]
+		Tkinter.Button(CentralMenu,text=texte,bg=color_ticket,fg=color_texte,font=size14,anchor=Tkinter.W,padx=0,pady=0,command=lambda chiffre=chiffre:touch("ticket",produit[chiffre])).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
+		chiffre+=1
 
 def ListeGauche():
     global contexte_unique
@@ -1277,19 +1288,19 @@ def Fonction():
     if contexte_unique.mode == CB_Vente_Produits:
         for key in range(len(fonction_vente_produits)):
             texte=""+str(key+1)+" "+fonction_vente_produits[key]
-            Tkinter.Button(CentralMenu,text=texte,bg=color_fonction,fg=color_texte,font=size15,anchor=Tkinter.W,padx=0,pady=0,command=lambda key=key:touch("fonction",key)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
+            Tkinter.Button(CentralMenu,text=texte,bg=color_fonction,fg=color_texte,font=size20,anchor=Tkinter.W,padx=0,pady=0,command=lambda key=key:touch("fonction",key)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
     if contexte_unique.mode == CB_Vente_Bracelets:
         for key in range(len(fonction_vente_bracelets)):
             texte=""+str(key+1)+" "+fonction_vente_bracelets[key]
-            Tkinter.Button(CentralMenu,text=texte,bg=color_fonction,fg=color_texte,font=size15,anchor=Tkinter.W,padx=0,pady=0,command=lambda key=key:touch("fonction",key)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
+            Tkinter.Button(CentralMenu,text=texte,bg=color_fonction,fg=color_texte,font=size20,anchor=Tkinter.W,padx=0,pady=0,command=lambda key=key:touch("fonction",key)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
     elif contexte_unique.mode == CB_Collabs:
         for key in range(len(fonction_utilisateurs)):
             texte=""+str(key+1)+" "+fonction_utilisateurs[key]
-            Tkinter.Button(CentralMenu,text=texte,bg=color_fonction,fg=color_texte,font=size15,anchor=Tkinter.W,padx=0,pady=0,command=lambda key=key:touch("fonction",key)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
+            Tkinter.Button(CentralMenu,text=texte,bg=color_fonction,fg=color_texte,font=size20,anchor=Tkinter.W,padx=0,pady=0,command=lambda key=key:touch("fonction",key)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
     elif contexte_unique.mode == CB_Gestion:
         for key in range(len(fonction_gestion)):
             texte=""+str(key+1)+" "+fonction_gestion[key]
-            Tkinter.Button(CentralMenu,text=texte,bg=color_fonction,fg=color_texte,font=size15,anchor=Tkinter.W,padx=0,pady=0,command=lambda key=key:touch("fonction",key)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)        
+            Tkinter.Button(CentralMenu,text=texte,bg=color_fonction,fg=color_texte,font=size20,anchor=Tkinter.W,padx=0,pady=0,command=lambda key=key:touch("fonction",key)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)        
 
 def Point():
     global x
@@ -1379,8 +1390,6 @@ class Contexte (): #threading.Thread
         self.logo = None
         self.image = None
         self.draw = None
-
-        print "="+str(screen_type)
 
         if screen_type==0:
             p_x = tile_width * (self.rank % 3)
