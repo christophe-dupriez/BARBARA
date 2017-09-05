@@ -42,7 +42,7 @@ class barbaraConfig():
         self.lf=None
         self.esc=None
         self.braceType=0
-        self.braceMin=990000000000
+	self.braceMin=990000000000
         self.braceMax=999999999999
         self.braceTitle = 'BARBARA'
         self.screenType=0

@@ -959,7 +959,7 @@ class Scanner(ConfigurationObject):
 ##        if denial:
 ##            denial = denial[0].lower()
 ##        return not (denial and (denial in ['o','y','+','1','2','3','4','5','6','7','8','9']) )
-        return client and client == c.barbaraConfig.akuinoHost
+        return client and (client == "global" or client == "serial" or client == c.barbaraConfig.akuinoHost)
 
     def strActive(self):
         if self.isActive():

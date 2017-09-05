@@ -14,6 +14,7 @@ import subprocess
 import codecs
 import sys
 import threading
+import serial
 import Tkinter
 from Queue import Queue,Empty
 import syslog
@@ -21,6 +22,7 @@ import socket
 import netifaces
 import zlib
 import tkFont
+import functools
 
 from PIL import Image
 from PIL import ImageDraw
@@ -280,8 +282,11 @@ scancodes = {
     20: u't', 21: u'y', 22: u'u', 23: u'i', 24: u'o', 25: u'p', 26: u'[', 27: u']', 28: u'CRLF', 29: u'LCTRL',
     30: u'a', 31: u's', 32: u'd', 33: u'f', 34: u'g', 35: u'h', 36: u'j', 37: u'k', 38: u'l', 39: u';',
     40: u'"', 41: u'`', 42: u'LSHFT', 43: u'\\', 44: u'z', 45: u'x', 46: u'c', 47: u'v', 48: u'b', 49: u'n',
-    50: u'm', 51: u',', 52: u'.', 53: u'/', 54: u'RSHFT', 56: u'LALT', 100: u'RALT'
-}
+    50: u'm', 51: u',', 52: u'.', 53: u'/', 54: u'RSHFT', 56: u'LALT', 100: u'RALT',
+    71: u'7', 72: u'8', 73: u'9', 74: u'-', 75: u'4', 76: u'5', 77: u'6', 
+    78: u'+', 79: u'1', 80: u'2', 81: u'3', 82: u'0', 83: u'.', 55: u'*',
+    96: u'CRLF', 98: u'/'
+ }
 
 capscodes = {
     0: None, 1: u'ESC', 2: u'!', 3: u'@', 4: u'#', 5: u'$', 6: u'%', 7: u'^', 8: u'&', 9: u'*',
@@ -289,7 +294,10 @@ capscodes = {
     20: u'T', 21: u'Y', 22: u'U', 23: u'I', 24: u'O', 25: u'P', 26: u'{', 27: u'}', 28: u'CRLF', 29: u'LCTRL',
     30: u'A', 31: u'S', 32: u'D', 33: u'F', 34: u'G', 35: u'H', 36: u'J', 37: u'K', 38: u'L', 39: u':',
     40: u'\'', 41: u'~', 42: u'LSHFT', 43: u'|', 44: u'Z', 45: u'X', 46: u'C', 47: u'V', 48: u'B', 49: u'N',
-    50: u'M', 51: u'<', 52: u'>', 53: u'?', 54: u'RSHFT', 56: u'LALT', 100: u'RALT'
+    50: u'M', 51: u'<', 52: u'>', 53: u'?', 54: u'RSHFT', 56: u'LALT', 100: u'RALT',
+    71: u'7', 72: u'8', 73: u'9', 74: u'-', 75: u'4', 76: u'5', 77: u'6', 
+    78: u'+', 79: u'1', 80: u'2', 81: u'3', 82: u'0', 83: u'.', 55: u'*',
+    96: u'CRLF', 98: u'/'
 }
 
 accented = [u'é',u'è',u'ç',u'à',u'ù',u'ä',u'ë',u'ï',u'ö',u'ü',u'â',u'ê',u'î',u'ô',u'û']
@@ -494,8 +502,6 @@ def ecran_qty(contexte) :
 def ecran_vente_produits(contexte):    
 
     #print "ECRAN DE VENTE PRODUITS"
-    
-    contexte.tk_vente_produits()
     
     if contexte.produit != None :   #si il y a un produit, on l'affiche avec la quantité choisie, son prix et le total (contexte.client après calcul) pour ce produit
         if hardConf.oled:
@@ -1128,6 +1134,7 @@ t,x=0,0
 global menu
 menu = Tkinter.StringVar()
 
+global contexte_unique
 contexte_unique=None
 
 #--------Gestion du Clavier--------#
@@ -1379,7 +1386,6 @@ class Contexte (): #threading.Thread
         self.charge = False
         self.wait = datetime.datetime.now()
 
-
     def reinit(self,anUser, save_mode = None):
         self.user = anUser # Utilisateur loggé
         self.mode = save_mode
@@ -1404,13 +1410,15 @@ class Contexte (): #threading.Thread
 
         self.pref_qty = u"€ "
         self.pref_nom = u"Nom:"
-        
+
         self.listeGauche = 1
-        self.listeGaucheNow = False
-        
+        self.listeGaucheNow = False        
+
         self.logo = None
         self.image = None
         self.draw = None
+
+        print "="+str(screen_type)
 
         if screen_type==0:
             p_x = tile_width * (self.rank % 3)
@@ -1437,7 +1445,7 @@ class Contexte (): #threading.Thread
             FrameMenu.bind_all('<KP_Subtract>',func=lambda event: choiceMoins)
             FrameMenu.bind_all('<KP_Decimal>',func=lambda event: choicePoint)
             FrameMenu.bind_all('<KP_Delete>',func=lambda event: touchPoint("DEL"))
-            FrameMenu.bind_all('KP_0',func=lambda event: touch(0))
+            FrameMenu.bind_all('<KP_0>',func=lambda event: touch(0))
             FrameMenu.bind_all('<KP_1>',func=lambda event: touch(1))
             FrameMenu.bind_all('<KP_2>',func=lambda event: touch(2))
             FrameMenu.bind_all('<KP_3>',func=lambda event: touch(3))
@@ -1511,7 +1519,7 @@ class Contexte (): #threading.Thread
             return None
         key = elements.keys()[index]
         return elements[key]
-       
+
     def syncChoixTicket(self,index,elements):
         self.syncListe(elements)
         index = index + self.debut
@@ -1604,7 +1612,7 @@ class Contexte (): #threading.Thread
                 t_mode = Tkinter.Label(self.canevas, text = modes[self.mode],background = color_canevas, foreground = color_header, font = size18)
                 
             else :
-                t_mode = Tkinter.Label(self.canevas, text = "Choisir Mode",background = color_canevas, foreground = color_header, font = size18)
+                t_mode = Tkinter.Label(self.canevas, text = "Choix Mode",background = color_canevas, foreground = color_header, font = size18)
         else :
             t_user = Tkinter.Label(self.canevas, text = " Identifiez vous ", background = "white", foreground = 'black' , font = size18)
             t_mode = Tkinter.Label(self.canevas, text = " ",background = color_canevas, foreground = color_header, font = size18)
@@ -1898,31 +1906,30 @@ class Contexte (): #threading.Thread
             theGrid.place(anchor=Tkinter.N, x=frame_width/2, y = 60)
 
             if brace_type==0:
-				name_column = Tkinter.Label(theGrid,text = "TICKET", fg = color_header, bg = color_canevas,font = size22)
-				name_column.grid(row = 0, column = 0,columnspan = 5, pady=4)
-				name_column = Tkinter.Label(theGrid,text = "Num.", fg = color_header, bg = color_canevas,font = size20)
-				name_column.grid(row = 1, column = 0, pady=2,padx=1)
-				name_column = Tkinter.Label(theGrid,text = "Nom", fg = color_header, bg = color_canevas,font = size20)
-				name_column.grid(row = 1, column = 1, pady=2,padx=1)
-				name_column = Tkinter.Label(theGrid,text = "Qte", fg = color_header,bg = color_canevas,font = size20)
-				name_column.grid(row = 1, column = 2, pady=2,padx=1)
-				name_column = Tkinter.Label(theGrid,text = " €/u ", fg = color_header,bg = color_canevas,font = size20)
-				name_column.grid(row = 1, column = 3, pady=2,padx=1)
-				name_column = Tkinter.Label(theGrid,text = " € tot", fg = color_header, bg = color_canevas,font = size20)
-				name_column.grid(row = 1, column = 4, pady=2,padx=1)
+	        name_column = Tkinter.Label(theGrid,text = "TICKET", fg = color_header, bg = color_canevas,font = size22)
+		name_column.grid(row = 0, column = 0,columnspan = 5, pady=4)
+		name_column = Tkinter.Label(theGrid,text = "Num.", fg = color_header, bg = color_canevas,font = size20)
+		name_column.grid(row = 1, column = 0, pady=2,padx=1)
+		name_column = Tkinter.Label(theGrid,text = "Nom", fg = color_header, bg = color_canevas,font = size20)
+		name_column.grid(row = 1, column = 1, pady=2,padx=1)
+		name_column = Tkinter.Label(theGrid,text = "Qte", fg = color_header,bg = color_canevas,font = size20)
+		name_column.grid(row = 1, column = 2, pady=2,padx=1)
+		name_column = Tkinter.Label(theGrid,text = " €/u ", fg = color_header,bg = color_canevas,font = size20)
+		name_column.grid(row = 1, column = 3, pady=2,padx=1)
+		name_column = Tkinter.Label(theGrid,text = " € tot", fg = color_header, bg = color_canevas,font = size20)
+		name_column.grid(row = 1, column = 4, pady=2,padx=1)
             
             
             elif brace_type == 1:
-				name_column = Tkinter.Label(theGrid,text = "TICKET", fg = color_header, bg = color_canevas,font = size22)
-				name_column.grid(row = 0, column = 0,columnspan = 5, pady=4)
-				name_column = Tkinter.Label(theGrid,text = "Nom", fg = color_header, bg = color_canevas,font = size20)
-				name_column.grid(row = 1, column = 1, pady=2,padx=1)
-				name_column = Tkinter.Label(theGrid,text = "Qte", fg = color_header,bg = color_canevas,font = size20)
-				name_column.grid(row = 1, column = 2, pady=2,padx=1)
-				name_column = Tkinter.Label(theGrid,text = " € tot", fg = color_header, bg = color_canevas,font = size20)
-				name_column.grid(row = 1, column = 3, pady=2,padx=1)
-            
-            
+		name_column = Tkinter.Label(theGrid,text = "TICKET", fg = color_header, bg = color_canevas,font = size22)
+		name_column.grid(row = 0, column = 0,columnspan = 5, pady=4)
+		name_column = Tkinter.Label(theGrid,text = "Nom", fg = color_header, bg = color_canevas,font = size20)
+		name_column.grid(row = 1, column = 1, pady=2,padx=1)
+		name_column = Tkinter.Label(theGrid,text = "Qte", fg = color_header,bg = color_canevas,font = size20)
+		name_column.grid(row = 1, column = 2, pady=2,padx=1)
+		name_column = Tkinter.Label(theGrid,text = " € tot", fg = color_header, bg = color_canevas,font = size20)
+		name_column.grid(row = 1, column = 3, pady=2,padx=1)
+                       
             for i in range(5):
                 theGrid.columnconfigure(i,weight=1)
             ligne = 1
@@ -1943,51 +1950,52 @@ class Contexte (): #threading.Thread
                     total = (price * float(self.prev_panier[element]))
                                                    
                     if brace_type == 0:
-						achat = Tkinter.Label(theGrid,text = unicode(index+1), fg = color_index,bg = color_canevas,font = size14)
-						achat.grid(row = ligne, column = 0, pady=2)
-						achat = Tkinter.Label(theGrid,text = element.fields["name"][:15], fg = color_header,bg = color_canevas,font = size18)
-						achat.grid(row = ligne, column = 1, pady=2)
-						achat = Tkinter.Label(theGrid,text = self.prev_panier[element], fg = color_message,bg = color_canevas,font = size18)
-						bouteilles += self.prev_panier[element]                    
-						achat.grid(row = ligne, column = 2, pady=2)
-						achat = Tkinter.Label(theGrid,text = element.fields["price"], fg = color_message,bg = color_canevas,font = size18)
-						achat.grid(row = ligne, column = 3, pady=2)
-						achat = Tkinter.Label(theGrid,text = total, fg = color_debit,bg = color_canevas,font = size18)
-						achat.grid(row = ligne, column = 4, pady=2)
-						index +=1
+		        achat = Tkinter.Label(theGrid,text = unicode(index+1), fg = color_index,bg = color_canevas,font = size14)
+			achat.grid(row = ligne, column = 0, pady=2)
+			achat = Tkinter.Label(theGrid,text = element.fields["name"][:15], fg = color_header,bg = color_canevas,font = size18)
+			achat.grid(row = ligne, column = 1, pady=2)
+			achat = Tkinter.Label(theGrid,text = self.prev_panier[element], fg = color_message,bg = color_canevas,font = size18)
+			bouteilles += self.prev_panier[element]                    
+			achat.grid(row = ligne, column = 2, pady=2)
+			achat = Tkinter.Label(theGrid,text = element.fields["price"], fg = color_message,bg = color_canevas,font = size18)
+			achat.grid(row = ligne, column = 3, pady=2)
+			achat = Tkinter.Label(theGrid,text = total, fg = color_debit,bg = color_canevas,font = size18)
+			achat.grid(row = ligne, column = 4, pady=2)
+			index +=1
                    
                     elif brace_type == 1:
-						achat = Tkinter.Label(theGrid,text = element.fields["name"][:15], fg = color_header,bg = color_canevas,font = size18)
-						achat.grid(row = ligne, column = 1, pady=2)
-						achat = Tkinter.Label(theGrid,text = self.prev_panier[element], fg = color_message,bg = color_canevas,font = size18)
-						bouteilles += self.prev_panier[element]                    
-						achat.grid(row = ligne, column = 2, pady=2)
-						achat = Tkinter.Label(theGrid,text = total, fg = color_debit,bg = color_canevas,font = size18)
-						achat.grid(row = ligne, column = 3, pady=2)
-						index +=1
+		        achat = Tkinter.Label(theGrid,text = element.fields["name"][:15], fg = color_header,bg = color_canevas,font = size18)
+			achat.grid(row = ligne, column = 1, pady=2)
+			achat = Tkinter.Label(theGrid,text = self.prev_panier[element], fg = color_message,bg = color_canevas,font = size18)
+			bouteilles += self.prev_panier[element]                    
+			achat.grid(row = ligne, column = 2, pady=2)
+			achat = Tkinter.Label(theGrid,text = total, fg = color_debit,bg = color_canevas,font = size18)
+			achat.grid(row = ligne, column = 3, pady=2)
+			index +=1
 
             total,bouteilles = self.total_panier(self.prev_panier)
             ligne += 1
             
             if brace_type == 0:
-				cell = Tkinter.Label(theGrid,text = unicode(len(self.prev_panier)), fg = color_index,bg = color_canevas,font = size18)
-				cell.grid(row = ligne, column = 0, pady=2)
-				cell = Tkinter.Label(theGrid,text = "TOTAL", fg = color_message,bg = color_canevas,font = size18)
-				cell.grid(row = ligne, column = 1, pady=2)
-				cell = Tkinter.Label(theGrid,text = unicode(bouteilles), fg = color_message,bg = color_canevas,font = size18)
-				cell.grid(row = ligne, column = 2, pady=2)
-				cell = Tkinter.Label(theGrid,text = unicode(total), fg = color_debit,bg = color_canevas,font = size18)
-				cell.grid(row = ligne, column = 4, pady=2)
+	        cell = Tkinter.Label(theGrid,text = unicode(len(self.prev_panier)), fg = color_index,bg = color_canevas,font = size18)
+	        cell.grid(row = ligne, column = 0, pady=2)
+	    	cell = Tkinter.Label(theGrid,text = "TOTAL", fg = color_message,bg = color_canevas,font = size18)
+		cell.grid(row = ligne, column = 1, pady=2)
+		cell = Tkinter.Label(theGrid,text = unicode(bouteilles), fg = color_message,bg = color_canevas,font = size18)
+		cell.grid(row = ligne, column = 2, pady=2)
+		cell = Tkinter.Label(theGrid,text = unicode(total), fg = color_debit,bg = color_canevas,font = size18)
+		cell.grid(row = ligne, column = 4, pady=2)
    
             elif brace_type == 1:
-				cell = Tkinter.Label(theGrid,text = unicode(len(self.prev_panier)), fg = color_index,bg = color_canevas,font = size18)
-				cell.grid(row = ligne, column = 0, pady=2)
-				cell = Tkinter.Label(theGrid,text = "TOTAL", fg = color_message,bg = color_canevas,font = size18)
-				cell.grid(row = ligne, column = 1, pady=2)
-				cell = Tkinter.Label(theGrid,text = unicode(bouteilles), fg = color_message,bg = color_canevas,font = size18)
-				cell.grid(row = ligne, column = 2, pady=2)
-				cell = Tkinter.Label(theGrid,text = unicode(total), fg = color_debit,bg = color_canevas,font = size18)
-				cell.grid(row = ligne, column = 3, pady=2) 
+		cell = Tkinter.Label(theGrid,text = unicode(len(self.prev_panier)), fg = color_index,bg = color_canevas,font = size18)
+		cell.grid(row = ligne, column = 0, pady=2)
+		cell = Tkinter.Label(theGrid,text = "TOTAL", fg = color_message,bg = color_canevas,font = size18)
+		cell.grid(row = ligne, column = 1, pady=2)
+		cell = Tkinter.Label(theGrid,text = unicode(bouteilles), fg = color_message,bg = color_canevas,font = size18)
+		cell.grid(row = ligne, column = 2, pady=2)
+		cell = Tkinter.Label(theGrid,text = unicode(total), fg = color_debit,bg = color_canevas,font = size18)
+		cell.grid(row = ligne, column = 3, pady=2)
+
     def tk_stock(self,all_stock):
             self.ensure_tkdisplay()
 
@@ -2089,6 +2097,8 @@ class Contexte (): #threading.Thread
                 elif brace_type == 1:
 					produit = Tkinter.Label(theGrid,text = " ABCDEFGHIJKL"[ligne-5], fg = color_header,bg = color_canevas,font = size20)
 					produit.grid(row = ligne, column = 0, pady=2,padx=4)
+					produit = Tkinter.Label(theGrid,text = objet.fields['barcode'], fg = color_product,bg = color_canevas,font = size16)
+					produit.grid(row = ligne, column = 1, pady=2,padx=4)
 					produit = Tkinter.Label(theGrid,text = objet.fields['name'][:15], fg = color_header,bg = color_canevas,font = size18)
 					produit.grid(row = ligne, column = 2, pady=2,padx=4)
 					produit = Tkinter.Label(theGrid,text = objet.fields["access"], fg = color_debit,bg = color_canevas,font = size18)
@@ -2350,7 +2360,7 @@ class Contexte (): #threading.Thread
         try :
             if (self.user != None) :
                 #determination du mode
-                    print u'res : ' + str(res)
+                    print 'res : ' + res
                     if res in modes :                    # il faudra tester si l'utilisateur peut accéder à ce mode
                         
                         if res == CB_User_Cancel :
@@ -2485,9 +2495,9 @@ class Contexte (): #threading.Thread
                             self.debut -=  TAILLE_ECRAN
                             if self.mode == CB_Vente_Produits:
                                 if brace_type == 0:
-								    ecran_facture(self)
+				    ecran_facture(self)
                                 elif brace_type == 1:
-								    pass
+				    pass
                             elif self.mode == CB_Stock:
                                 ecran_stock(self,True)
                             elif self.mode == CB_Collabs:
@@ -2498,7 +2508,7 @@ class Contexte (): #threading.Thread
                             self.debut +=  TAILLE_ECRAN
                             if self.mode == CB_Vente_Produits:
                                 if brace_type == 0:
-									ecran_facture(self)
+				    ecran_facture(self)
                                 elif brace_type == 1:
                                     pass
                             elif self.mode == CB_Stock:
@@ -2839,7 +2849,7 @@ def insureContext(aScannerKey):
             rank += 1
             return allContexte[contextRank]
         else:
-            print(aScannerKey+" TOO MANY SCANNERS: 6 is the maximum")
+            print(aScannerKey+" TOO MANY SCANNERS: "+MAX_TILES+" is the maximum")
             return None
     else:
         return None
@@ -2847,13 +2857,67 @@ def insureContext(aScannerKey):
 if brace_type == 0:    
     threadBlueTooth,threadBluetoothEnQueue = bluetooth.start()
 
+
+# classe qui lance un thread de gestion du code barre par appareil, cette fonction se charge aussi de mettre les codes barres receuillis dans une queue
+class SerialInputThread(threading.Thread):
+
+    def __init__(self,currentScanner):
+        threading.Thread.__init__(self)
+        self.currScanner = currentScanner
+        self.Alive = False
+        self.dev = None
+        try:
+            self.dev = serial.Serial(currentScanner.fields[u'name'],9600,timeout=0.1)
+        except:
+            traceback.print_exc()
+        time.sleep(0.1)
+        
+    def run(self):
+        self.Alive = self.dev != None
+	line = ""
+        time.sleep(0.01)
+                
+        global Alive
+
+        while Alive and self.Alive:
+           try:
+		data = self.dev.read()
+		if data:
+		    if data < ' ':
+                        if not Alive:
+                            break
+                        elif not self.Alive:
+                            break
+                        elif line:
+                            local_rank = -1
+                            for contextRank in range(MAX_TILES):
+                                if allContexte[contextRank] and allContexte[contextRank].currScanner and allContexte[contextRank].currScanner == self.currScanner:
+                                    local_rank = contextRank
+                                    break
+                            if local_rank >= 0:
+                                print("\n " + unicode(local_rank) + ":  " + line)
+                                contexte = allContexte[local_rank]
+                                contexte.inputQueue.put(line)
+                            line = ""
+                    else:
+			line += data
+                    
+           except:
+               traceback.print_exc()
+           time.sleep(0.001)
+        if self.dev:
+            self.dev.close()
+        self.Alive = False
+
+threadSerial = None
+
 # classe qui lance un thread de gestion du code barre par appareil, cette fonction se charge aussi de mettre les codes barres receuillis dans une queue
 class InputEventThread(threading.Thread):
 
     def __init__(self,currentScanner):
         threading.Thread.__init__(self)
         self.currScanner = currentScanner
-        #self.dev = evdev.InputDevice("/dev/input/event"+unicode(self.currScanner.numDev))
+        self.dev = evdev.InputDevice("/dev/input/event"+unicode(self.currScanner.numDev))
         self.Alive = False
         
     def run(self):
@@ -2887,10 +2951,11 @@ class InputEventThread(threading.Thread):
                         break
                     if event.type == evdev.ecodes.EV_KEY:
                         data = evdev.categorize(event)
+			print data.scancode
                         if data.scancode == 42:
                             caps = not data.keystate == 0
                         elif data.keystate == 1:
-                            if data.scancode == 28:
+                            if data.scancode == 28 or data.scancode == 96:
                                 local_rank = -1
                                 for contextRank in range(MAX_TILES):
                                     if allContexte[contextRank] and allContexte[contextRank].currScanner and allContexte[contextRank].currScanner == self.currScanner:
@@ -2911,7 +2976,7 @@ class InputEventThread(threading.Thread):
                                     else:
                                         res += scancodes[int(data.scancode)]
                                 except:
-                                    print("Invelid key:",data.scancode)
+                                    print("Invalid key:"+unicode(data.scancode))
                                     
                     #else:
                        # print event               
@@ -2955,6 +3020,8 @@ def InputListThread():
     global bluetoothScanner
 
     global screen_type
+
+    global threadSerial
     
     #if screen_type !=0:
         
@@ -2974,17 +3041,24 @@ def InputListThread():
             activeSet = []
             screen.devConnected = ""
             for inputLine in fInputDevices:
-                if inputLine[:8] == 'U: Uniq=':
-                    physical = inputLine[8:].strip()
+                if inputLine[:2] == 'I:':
+                    physical = None
+                elif inputLine[:8] == 'N: Name=':
+                    physical = inputLine[8:].strip('" \r\n')
+                elif inputLine[:8] == 'U: Uniq=':
+                    unique = inputLine[8:].strip('" \r\n')
+                    if unique:
+                        physical = unique
                 elif inputLine[:12] == 'H: Handlers=':
-                    for capab in inputLine[12:].strip().split(' '):
-                        if (capab[:5] == 'sysrq') and (physical==""):
-                            physical='AFANDBARCODE'
+		    for capab in inputLine[12:].strip('" \r\n').split(' '):
+                        #if (capab[:5] == 'sysrq') and (physical==""):
+                        #    physical=MAC_USB_Scanner
                         if capab[:5] == 'event':
                             numDev = int(capab[5:])
                             if physical:
                                 key = c.AllScanners.makeKey(physical)
                                 if key in c.AllScanners.elements:
+	                            #print unicode(numDev)+"="+physical
                                     currScanner = c.AllScanners.elements[key]                                
                                     if currScanner.isActive(): #not denied
                                         currScanner.numDev = numDev
@@ -3001,7 +3075,9 @@ def InputListThread():
                                                 currScanner.reader = InputEventThread(currScanner)
                                             else:
                                                 continue # Thread still alive
-                                            #currScanner.reader.start()
+                                            currScanner.reader.daemon = True
+                                            currScanner.reader.start()
+                                            print unicode(currScanner.numDev)+"<="+unicode(key)
 
                                             if hardConf.oled:
                                                 if not somethingDisplayed:
@@ -3016,12 +3092,30 @@ def InputListThread():
                                                 screen.linePos += screen.lineHeight
                                                 screen.draw.text((screen.begScreen,screen.linePos+1), "            "+currScanner.id, font=screen.font,fill=255)
                                                 screen.linePos += screen.lineHeight
-                                    physical = None
+                                physical = None
 
             for key in c.AllScanners.elements:
                 currScanner = c.AllScanners.elements[key]
                 if key in activeSet:
                     pass
+                elif currScanner.fields[u"client"] == "serial":
+                    if not threadSerial:
+                        currScanner.numDev = numDev
+                        currScanner.paired = True
+                        currScanner.connected = True
+                        key = currScanner.id
+                        threadContext = insureContext(key)
+                        if threadContext:
+                            activeSet.append(key)
+                            screen.devConnected += unicode(threadContext.rank)
+                            if currScanner.reader is None :
+                                currScanner.reader = SerialInputThread(currScanner)
+                                currScanner.reader.daemon = True
+                                currScanner.reader.start()
+                            elif (not currScanner.reader.is_alive()) or (not currScanner.reader.Alive):
+                                currScanner.reader = SerialInputThread(currScanner)
+                                currScanner.reader.daemon = True
+                                currScanner.reader.start()
                 else:
                     if currScanner.reader:
                         currScanner.reader.Alive = False
@@ -3256,6 +3350,7 @@ def configPanel(event):
 def execThreads():
 
     global Alive, contexte_unique
+    
     time.sleep(0.01)
     for local_rank in allContexte:
         aContext = allContexte[local_rank]
@@ -3290,6 +3385,7 @@ threadList.join()
 time.sleep(0.5)
 #if hardConf.running:
 #    PIG.write(hardConf.running, 0)
-PIG.stop()
+if hardConf.running:
+    PIG.stop()
 
 # COMMANDE DE lANCEMENT DU PROGRAMME : sudo xinit ~/Desktop/mypython.sh

@@ -13,7 +13,7 @@ class HardConfig():
     config = None
     idDefinitions = {}
     hostname = "UNKNOWN"
-    RUNdirectory = "/run/akuino"
+    rundirectory = "/run/akuino"
     model = '3'
     i2c_bus = 1
     spi_channel = 0
