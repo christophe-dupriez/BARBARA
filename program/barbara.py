@@ -402,7 +402,6 @@ color_index = u"green"
 
 color_texte = u"white"
 
-
 # Preparation de l'ecran integre : affichage du s, de l'utilisateur et de l'heure
 def lcd_screen (contexte) :
 
@@ -732,7 +731,7 @@ def ecran_transaction_client(contexte):  #lors de la vente de produit !
         pos = pos+x
         screen.draw.text((pos,screen.linePos+11), (screen.euro) , font=screen.font,fill=255)
 
-    screen.show()
+        screen.show()
 
 
 # Affichage de l'ecran ou on demande le moyen de paiement, on lui montre son solde apres le chargement/achat du bracelet
@@ -1005,6 +1004,8 @@ def ecran_scanner(contexte):
 
 # acquisition des parametres de l'écran au démarage du programme (résolution)
 tkdisplay_root = Tkinter.Tk()
+tkdisplay_root.title(u"Barbara")
+tkdisplay_root.configure(background=color_window)
 #tkdisplay_root.after(50,tkdisplay_root.quit)
 #screen_height = tkdisplay_root.winfo_screenheight() - 48
 screen_height=480
@@ -1043,7 +1044,6 @@ while not scannersLoaded:
 
 screen_type=barbaraConfiguration.screenType
 brace_type = barbaraConfiguration.braceType 
-print brace_type
 
 if screen_type==0:
     MAX_TILES = c.AllScanners.countActive()
@@ -1143,6 +1143,7 @@ def destroy_frame():
     global CentralMenu
     for widget in CentralMenu.winfo_children():
         widget.destroy()
+    reset_clavier()
 
 def choiceMenu():
 	global contexte_unique
@@ -1159,8 +1160,7 @@ def choiceTicket():
 	destroy_frame()
 	contexte_unique.listeGauche = 2
 	contexte_unique.listeGaucheNow = True
-	ecran_facture(contexte_unique)
-	
+	Contexte.tk_facture(contexte_unique)
 def choiceListe():
 	global contexte_unique
 	destroy_frame()
@@ -1213,6 +1213,10 @@ def Fonction():
         for key in range(len(fonction_gestion)):
             texte=""+str(key+1)+" "+fonction_gestion[key]
             Tkinter.Button(CentralMenu,text=texte,bg=color_fonction,fg=color_texte,font=size20,anchor=Tkinter.W,padx=0,pady=0,command=lambda key=key: touchFonction(key+1)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)        
+    elif contexte_unique.mode == CB_Stock:
+        for key in range(len(fonction_produits)):
+            texte=""+str(key+1)+" "+fonction_produits[key]
+            Tkinter.Button(CentralMenu,text=texte,bg=color_fonction,fg=color_texte,font=size20,anchor=Tkinter.W,padx=0,pady=0,command=lambda key=key: touchFonction(key+1)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)        
 
 def ListeGauche():
     global contexte_unique
@@ -1232,7 +1236,7 @@ def Ticket():
 		price = element.getCents()/100.0 #on met le prix en float
 		produit[element]=chiffre
 		texte = u" " + str(chiffre+1) + u" | " + str(contexte_unique.prev_panier[element]) + u" " + element.fields[u"name"][:15] + u" | " + str(element.fields[u"price"])
-		Tkinter.Button(CentralMenu,text=texte,bg=color_ticket,fg=color_texte,font=size18,width=tile_width/20,height=tile_height/400,anchor=Tkinter.W,padx=0,pady=0,command=lambda element=element: touchTicket(produit[element]+1)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
+		Tkinter.Button(CentralMenu,text=texte,bg=color_ticket,fg=color_texte,font=size18,anchor=Tkinter.W,padx=0,pady=0,command=lambda element=element: touchTicket(produit[element]+1)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
 		chiffre+=1
 
 def Liste():
@@ -1244,9 +1248,9 @@ def Liste():
         produit={}
         for key in refset:
             objet = c.AllProducts.elements[key]
-            texte = u" " + str(chiffre+1) + u" | " + objet.fields[u'price'] + u" € | " + objet.fields[u'name']
+            texte = u" " + str(chiffre+1) + u" | " + objet.fields[u'price'] + u" € | " + objet.fields[u'name'][:15]
             produit[key]=chiffre
-            Tkinter.Button(CentralMenu,text=texte,bg=color_liste,fg=color_texte,font=size18,width=tile_width/20,height=tile_height/400,anchor=Tkinter.W,command=lambda key=key: touchListe(produit[key]+1)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
+            Tkinter.Button(CentralMenu,text=texte,bg=color_liste,fg=color_texte,font=size17,anchor=Tkinter.W,command=lambda key=key: touchListe(produit[key]+1)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
             chiffre+=1
     elif(contexte_unique.mode == CB_Collabs):
         refset = c.AllUsers.elements.keys()[contexte_unique.debut : contexte_unique.debut+TAILLE_ECRAN]
@@ -1255,7 +1259,7 @@ def Liste():
             objet = c.AllUsers.elements[key]
             texte = u" " + str(chiffre+1) + u" | " + objet.fields[u'name'] + u" | " + objet.fields[u'access']
             user[key]=chiffre
-            Tkinter.Button(CentralMenu,text=texte,bg=color_liste,fg=color_texte,font=size18,width=tile_width/20,height=tile_height/400,anchor=Tkinter.W,command=lambda key=key: touchListe(user[key]+1)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
+            Tkinter.Button(CentralMenu,text=texte,bg=color_liste,fg=color_texte,font=size19,anchor=Tkinter.W,command=lambda key=key: touchListe(user[key]+1)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
             chiffre+=1
     elif (contexte_unique.mode == CB_Scanners):
         scan={}
@@ -1264,7 +1268,7 @@ def Liste():
             objet = c.AllScanners.elements[key]
             texte = u" " + str(chiffre+1) + u" | " + objet.fields['name'] + u" | " + objet.fields['pin']
             scan[key]=chiffre
-            Tkinter.Button(CentralMenu,text=texte,bg=color_liste,fg=color_texte,font=size18,width=tile_width/20,height=tile_height/400,anchor=Tkinter.W,command=lambda key=key: touchListe(scan[key]+1)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
+            Tkinter.Button(CentralMenu,text=texte,bg=color_liste,fg=color_texte,font=size19,anchor=Tkinter.W,command=lambda key=key: touchListe(scan[key]+1)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
             chiffre+=1
 
 def Point():
@@ -1344,7 +1348,10 @@ def touchFonction(chiffre):
 	elif contexte_unique.mode==CB_Gestion:
 		barcode=fonction_gestion_barcode[chiffre-1]
 		contexte_unique.inputQueue.put(str(barcode))
-       
+	elif contexte_unique.mode==CB_Stock:
+		barcode=fonction_produits_barcode[chiffre-1]
+		contexte_unique.inputQueue.put(str(barcode))
+              
 def touchPoint(qte):
     global t
     global mem
@@ -1437,13 +1444,13 @@ class Contexte (): #threading.Thread
             global contexte_unique
             contexte_unique=self
 
-            FrameMenu=Tkinter.Frame(tkdisplay_root,width=tile_width,height=tile_height)#,width=tile_width,height=tile_height,padx=0,pady=0)
-            FrameMenu.bind_all('<KP_Divide>',func=lambda event: choiceFonction)
-            FrameMenu.bind_all('<KP_Multiply>',func=lambda event: choiceTicket)
-            FrameMenu.bind_all('<KP_Enter>',func=lambda event: choiceListe)
-            FrameMenu.bind_all('<KP_Add>',func=lambda event: choicePlus)
-            FrameMenu.bind_all('<KP_Subtract>',func=lambda event: choiceMoins)
-            FrameMenu.bind_all('<KP_Decimal>',func=lambda event: choicePoint)
+            FrameMenu=Tkinter.Frame(tkdisplay_root,width=tile_width,height=tile_height,bg=color_window)#,width=tile_width,height=tile_height,padx=0,pady=0)
+            FrameMenu.bind_all('<KP_Divide>',func=lambda event: choiceFonction())
+            FrameMenu.bind_all('<KP_Multiply>',func=lambda event: choiceTicket())
+            FrameMenu.bind_all('<KP_Enter>',func=lambda event: choiceListe())
+            FrameMenu.bind_all('<KP_Add>',func=lambda event: choicePlus())
+            FrameMenu.bind_all('<KP_Subtract>',func=lambda event: choiceMoins())
+            FrameMenu.bind_all('<KP_Decimal>',func=lambda event: choicePoint())
             FrameMenu.bind_all('<KP_Delete>',func=lambda event: touchPoint("DEL"))
             FrameMenu.bind_all('<KP_0>',func=lambda event: touch(0))
             FrameMenu.bind_all('<KP_1>',func=lambda event: touch(1))
@@ -1455,10 +1462,10 @@ class Contexte (): #threading.Thread
             FrameMenu.bind_all('<KP_7>',func=lambda event: touch(7))
             FrameMenu.bind_all('<KP_8>',func=lambda event: touch(8))
             FrameMenu.bind_all('<KP_9>',func=lambda event: touch(9))        
-            FrameMenu.pack(anchor=Tkinter.NW,expand=1)
+            FrameMenu.pack(anchor=Tkinter.NW)
 
-            TopMenu=Tkinter.Frame(FrameMenu,width=tile_width,height=tile_height/10)#,width=tile_width,height=tile_height/10,padx=0,pady=0)
-            TopMenu.pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)#,padx=0,pady=0,ipadx=0,ipady=0)
+            TopMenu=Tkinter.Frame(FrameMenu,width=tile_width,height=tile_height/10,bg=color_window)#,width=tile_width,height=tile_height/10,padx=0,pady=0)
+            TopMenu.pack(fill=Tkinter.BOTH,side=Tkinter.TOP)#,padx=0,pady=0,ipadx=0,ipady=0)
 
             MenuButton=Tkinter.Button(TopMenu,text="/0",bg=color_index,fg=color_texte,height=tile_height/500,font=size24,command=choiceMenu).pack(fill=Tkinter.X,expand=1,side=Tkinter.LEFT)
             FonctionButton=Tkinter.Button(TopMenu,text="/",bg=color_fonction,fg=color_texte,font=size24,command=choiceFonction).pack(fill=Tkinter.X,expand=1,side=Tkinter.LEFT)
@@ -1468,8 +1475,8 @@ class Contexte (): #threading.Thread
             MoinsButton=Tkinter.Button(TopMenu,text=u"-",bg=color_moins,fg=color_texte,font=size24,command=choiceMoins).pack(fill=Tkinter.X,expand=1,side=Tkinter.LEFT)
             PointButton=Tkinter.Button(TopMenu,text=u".",bg=color_point,fg=color_texte,font=size24,command=choicePoint).pack(fill=Tkinter.X,expand=1,side=Tkinter.LEFT)
 
-            CentralMenu=Tkinter.Frame(FrameMenu,width=tile_width,height=8*tile_height/10)
-            CentralMenu.pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
+            CentralMenu=Tkinter.Frame(FrameMenu,width=tile_width,height=8*tile_height/10,bg=color_window)
+            CentralMenu.pack(fill=Tkinter.BOTH,side=Tkinter.TOP)
 
             Principal()
 
@@ -2605,9 +2612,11 @@ class Contexte (): #threading.Thread
                                     if self.produit:
                                         if self.modifier:
                                             self.retirer_produit()
-                                            choiceTicket()                   
+                 			    ecran_facture(self)
+                                            choiceTicket()
                                         else:
                                             self.ajouter_produit()
+                 			    ecran_facture(self)
                                             choiceTicket()
                             return True
         except :
