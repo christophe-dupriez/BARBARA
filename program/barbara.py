@@ -14,13 +14,17 @@ import subprocess
 import codecs
 import sys
 import threading
+import serial
 import Tkinter
+import ttk
 from Queue import Queue,Empty
 import syslog
 import socket
 import netifaces
 import zlib
 import tkFont
+import functools
+from vKeyboard import vKeyboard
 
 from PIL import Image
 from PIL import ImageDraw
@@ -128,11 +132,12 @@ def networkSendBroadcast():
   s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
   while Alive:
-    statistics = str(c.AllTransactions.total_buyWithBrace)+"/"+str(c.AllTransactions.total_credit)
+    statistics = unicode(c.AllTransactions.total_buyWithBrace)+"/"+unicode(c.AllTransactions.total_credit)
     message = barbaraConfiguration.applicationURL+'\t'+statistics+'\t'+compactNow()
     s.sendto(messageCRC(message)+'\t'+message+'\n', ('<broadcast>', barbaraConfiguration.broadcastPort))
     try: # May fail if received too early...
-        stats_label.set(statistics)
+        strnow = unicode(datetime.datetime.now().strftime("%H:%M"))
+        stats_label.set(strnow+" : "+statistics)
     except:
         pass
     time.sleep(barbaraConfiguration.broadcastDelay)
@@ -173,6 +178,7 @@ def networkReceiveBroadcast():
                 if crc == crcMess:
                     messageParts = netMessage.split('\t')
                     if len(messageParts) >= 3:
+                        strnow = unicode(datetime.datetime.now().strftime("%H:%M"))
                         statistics = messageParts[1]
                         barbaraConfiguration.applicationURL = messageParts[0]
                         correctClock(messageParts[2])
@@ -182,7 +188,7 @@ def networkReceiveBroadcast():
                             scannersLoaded = True
                         print barbaraConfiguration.applicationURL,"=",statistics
                         try: # May fail if received too early...
-                            stats_label.set(statistics)
+                            stats_label.set(strnow+" : "+statistics)
                         except:
                             pass
                     else:
@@ -204,7 +210,7 @@ localAddr = u""
 for ifaceName in netifaces.interfaces():
   addresses = [anInterface['addr'] for anInterface in netifaces.ifaddresses(ifaceName).setdefault(netifaces.AF_INET, [{'addr':'No IP addr'}] )]
   IP = ', '.join(addresses)
-  #print '%s: %s' % (ifaceName, str(IP))
+  #print '%s: %s' % (ifaceName, unicode(IP))
   if (ifaceName != 'lo'):
     if (IP != 'No IP addr'):
       localAddr = IP
@@ -280,8 +286,11 @@ scancodes = {
     20: u't', 21: u'y', 22: u'u', 23: u'i', 24: u'o', 25: u'p', 26: u'[', 27: u']', 28: u'CRLF', 29: u'LCTRL',
     30: u'a', 31: u's', 32: u'd', 33: u'f', 34: u'g', 35: u'h', 36: u'j', 37: u'k', 38: u'l', 39: u';',
     40: u'"', 41: u'`', 42: u'LSHFT', 43: u'\\', 44: u'z', 45: u'x', 46: u'c', 47: u'v', 48: u'b', 49: u'n',
-    50: u'm', 51: u',', 52: u'.', 53: u'/', 54: u'RSHFT', 56: u'LALT', 100: u'RALT'
-}
+    50: u'm', 51: u',', 52: u'.', 53: u'/', 54: u'RSHFT', 56: u'LALT', 100: u'RALT',
+    71: u'7', 72: u'8', 73: u'9', 74: u'-', 75: u'4', 76: u'5', 77: u'6', 
+    78: u'+', 79: u'1', 80: u'2', 81: u'3', 82: u'0', 83: u'.', 55: u'*',
+    96: u'CRLF', 98: u'/'
+ }
 
 capscodes = {
     0: None, 1: u'ESC', 2: u'!', 3: u'@', 4: u'#', 5: u'$', 6: u'%', 7: u'^', 8: u'&', 9: u'*',
@@ -289,7 +298,10 @@ capscodes = {
     20: u'T', 21: u'Y', 22: u'U', 23: u'I', 24: u'O', 25: u'P', 26: u'{', 27: u'}', 28: u'CRLF', 29: u'LCTRL',
     30: u'A', 31: u'S', 32: u'D', 33: u'F', 34: u'G', 35: u'H', 36: u'J', 37: u'K', 38: u'L', 39: u':',
     40: u'\'', 41: u'~', 42: u'LSHFT', 43: u'|', 44: u'Z', 45: u'X', 46: u'C', 47: u'V', 48: u'B', 49: u'N',
-    50: u'M', 51: u'<', 52: u'>', 53: u'?', 54: u'RSHFT', 56: u'LALT', 100: u'RALT'
+    50: u'M', 51: u'<', 52: u'>', 53: u'?', 54: u'RSHFT', 56: u'LALT', 100: u'RALT',
+    71: u'7', 72: u'8', 73: u'9', 74: u'-', 75: u'4', 76: u'5', 77: u'6', 
+    78: u'+', 79: u'1', 80: u'2', 81: u'3', 82: u'0', 83: u'.', 55: u'*',
+    96: u'CRLF', 98: u'/'
 }
 
 accented = [u'é',u'è',u'ç',u'à',u'ù',u'ä',u'ë',u'ï',u'ö',u'ü',u'â',u'ê',u'î',u'ô',u'û']
@@ -373,19 +385,23 @@ menu_choices = {"1000000012019":1,
 
 #BACKGROUND:
 color_window = u"gray25"
-color_canevas = u"navy"
+color_canevas = u"deepPink" #u"navy"
 
-color_principal = u"navy"
-color_fonction = u"rosy brown"
-color_liste = u"NavajoWhite3"
-color_ticket = u"khaki3"
-color_plus = u"gold2"
+color_principal = u"grey10" #u"navy"
+color_fonction0 = u"grey10"
+color_fonction = u"navy"
+color_liste = u"green" #u"NavajoWhite3"
+color_ticket = u"red" #u"khaki3"
+color_plus = u"gray25"
 color_moins = u"gray25"
 color_point = u"tomato"
 
+color_stat = u"grey15"
+color_stat2 = u"grey15"
+
 #FOREGROUND
 color_product = u"cyan"
-color_client = u"magenta"
+color_client = u"black"
 color_message = u"orange"
 color_header = u"white"
 color_debit = u"yellow"
@@ -393,7 +409,6 @@ color_credit = u"chartreuse2"
 color_index = u"green"
 
 color_texte = u"white"
-
 
 # Preparation de l'ecran integre : affichage du s, de l'utilisateur et de l'heure
 def lcd_screen (contexte) :
@@ -445,7 +460,7 @@ def color_screen(x0 = screen.begScreen,y0 = 0, x1 = screen.endScreen , y1 = 63) 
 ##                screen.linePos = clear ()
 ##                strnow = datetime.datetime.now().strftime("%H:%M")
 ##                screen.draw.text((100,screen.linePos+1), strnow, font=screen.font,fill=255)
-##    ##        print '\n' + str(screen.linePos) + '\n'
+##    ##        print '\n' + unicode(screen.linePos) + '\n'
 ##    ##        print (nameDev + ' is grab and ready to use \n')
 ##            screen.draw.text((4,screen.linePos+1),unicode(i), font=screen.font,fill=255)
 ##            i+= 1
@@ -724,7 +739,7 @@ def ecran_transaction_client(contexte):  #lors de la vente de produit !
         pos = pos+x
         screen.draw.text((pos,screen.linePos+11), (screen.euro) , font=screen.font,fill=255)
 
-    screen.show()
+        screen.show()
 
 
 # Affichage de l'ecran ou on demande le moyen de paiement, on lui montre son solde apres le chargement/achat du bracelet
@@ -987,7 +1002,7 @@ def ecran_scanner(contexte):
 ##    screen.linePos = clear() #effacage de l'écran
 ##    strnow = datetime.datetime.now().strftime("%H:%M")
 ##    screen.draw.text((100,screen.linePos+1), strnow, font=screen.font,fill=255)
-##    screen.draw.text((3,screen.linePos+1), str(numDev), font=screen.font,fill=255)
+##    screen.draw.text((3,screen.linePos+1), unicode(numDev), font=screen.font,fill=255)
 ##    screen.draw.text((13,screen.linePos+1), name, font=screen.font,fill=255)
 ##    screen.linePos += screen.lineHeight
 ##    screen.draw.text((4,screen.linePos+1), res, font=screen.font,fill=255)
@@ -997,10 +1012,12 @@ def ecran_scanner(contexte):
 
 # acquisition des parametres de l'écran au démarage du programme (résolution)
 tkdisplay_root = Tkinter.Tk()
+tkdisplay_root.title(u"Barbara")
+tkdisplay_root.configure(background=color_window)
 #tkdisplay_root.after(50,tkdisplay_root.quit)
 #screen_height = tkdisplay_root.winfo_screenheight() - 48
 screen_height=480
-net_screen_height = screen_height - 32 - 4 - 8
+net_screen_height = screen_height - 32 - 4 - 8 - 4
 #screen_width = tkdisplay_root.winfo_screenwidth()
 screen_width=800
 
@@ -1028,6 +1045,36 @@ size30=tkFont.Font(size=30,weight="bold")
 size36=tkFont.Font(size=36,weight="bold")
 size38=tkFont.Font(size=38,weight="bold")
 
+def chooseFont(lines):
+#    if lines >= 9:
+#        return size18
+#    elif lines >= 8:
+#        return size19
+#    elif lines >= 7:
+#        return size20
+#    elif lines >= 6:
+#        return size21
+#    elif lines >= 5:
+#        return size22
+#    elif lines >= 4:
+#        return size23
+#    elif lines >= 3:
+#        return size24
+#    elif lines >= 2:
+#        return size25
+#    elif lines >= 1:
+#        return size26
+#    else:
+        return size18
+
+def adaptText(lines, aLine):
+    if lines >= 7:
+	return aLine
+    elif lines >= 4:
+        return aLine + u"\n"
+    else:
+        return u"\n" + aLine + u"\n"
+
 while not scannersLoaded:
     print "Waiting for Central server"
     time.sleep(2)
@@ -1035,7 +1082,6 @@ while not scannersLoaded:
 
 screen_type=barbaraConfiguration.screenType
 brace_type = barbaraConfiguration.braceType 
-print brace_type
 
 if screen_type==0:
     MAX_TILES = c.AllScanners.countActive()
@@ -1063,240 +1109,307 @@ else:
 tkdisplay_root.geometry(unicode(screen_width)+"x"+unicode(screen_height))
 tkdisplay_root.minsize(width=screen_width,height=screen_height)
 tkdisplay_root.resizable(width=False,height=False)
-frame_height = tile_height - 10
+frame_height = tile_height - 14
 frame_width = tile_width - 4 - 8
 print "Screen : "+ unicode(screen_width) + "x" + unicode(screen_height)
 
 if screen_type==0:
     logo = Tkinter.PhotoImage(file = baseDirIMG+"AKUINO.gif")
-    logo_frame = Tkinter.Canvas(tkdisplay_root, background = 'black', height = logo.height(), width = logo.width())
+    logo_frame = Tkinter.Canvas(tkdisplay_root, background = color_stat, height = logo.height(), width = logo.width())
     draw_logo = logo_frame.create_image(1,1,image = logo,anchor=Tkinter.NW,state=Tkinter.NORMAL)
     logo_frame.place(anchor=Tkinter.CENTER,x=screen_width/2, y=screen_height/2)  
 
 stats_label = Tkinter.StringVar(tkdisplay_root)
 
-stat_frame = Tkinter.Canvas(tkdisplay_root, background = 'black', height = 32, width = screen_width)
-stat_frame.place(anchor=Tkinter.CENTER,x=screen_width/2, y=screen_height-32)  
-stat_time = Tkinter.Label(stat_frame, textvariable = stats_label,background = color_canevas, foreground = color_header, font = size18) 
+stat_frame = Tkinter.Canvas(tkdisplay_root, background = color_stat, height = 32, width = screen_width)
+stat_frame.place(anchor=Tkinter.SW,x=0, y=screen_height)  
+stat_time = Tkinter.Label(stat_frame, textvariable = stats_label,background = color_stat2, foreground = color_header, font = size18) 
 stat_time.place(anchor=Tkinter.NW, x = 1 , y = 1) #positionnement
-
-FrameMenu=None
-TopMenu=None
-FonctionButton=None
-TicketButton=None
-ListeButton=None
-PlusButton=None
-MoinsButton=None
-PointButton=None
-CentralMenu=None
 
 #-------Variables Clavier-------#
 
-principal =[u"Vente Bracelets",u"Vente Produits",u"Utilisateurs",u"Produits",u"Scanners",u"Fonction Gestion",u"User Barbara"]
-principal_barcode=[1000000010039,1000000010053,1000000011036,1000000010114,1000000011043,1000000011050,1000000010121]
+principal =[u"Vente Bracelets",u"Vente Produits",u"Utilisateurs",u"Produits",u"Gestion"]
+principal_barcode=[1000000010039,1000000010053,1000000011036,1000000010114,1000000011050]
 
 ticket_barcode=[1000000012019,1000000012026,1000000012033,1000000012040,1000000012057,1000000012064,1000000012071,1000000012088,1000000012095]
 
 liste_barcode=[1000000012019,1000000012026,1000000012033,1000000012040,1000000012057,1000000012064,1000000012071,1000000012088,1000000012095]
 
-fonction_vente_bracelets=[u"Paiement par Cash", u"Paiement par Carte"]
-fonction_vente_bracelets_barcode=[1000000010015,1000000010022]
+fonction_vente_bracelets=[u"Nouveau Bracelet",u"Paiement CASH", u"Paiement CB"]
+fonction_vente_bracelets_barcode=[1000000010107,1000000010015,1000000010022]
 
-fonction_vente_produits=[u"Ticket 1",u"Ticket 2",u"Ticket 3",u"Ticket 4"]
-fonction_vente_produits_barcode=[1000000011111,1000000011128,1000000011135,1000000011142]
+fonction_vente_produits=[u"Retirer Produits"]
+fonction_vente_produits_barcode=[1000000010046]
 
-fonction_utilisateurs=[u"Droits VB",u"Droits VP",u"Droits G",u"Effacer Nombre"]
-fonction_utilisateurs_barcode=[1000000000016,1000000000207,1000000009002,1000000011098]
+fonction_utilisateurs=[u"Nouvel utilisateur",u"Désactiver Utilisateur",u"OK Vente Bracelets",u"OK Vente Produits",u"OK Gestion",u"Annuler Droits",u"Sauvegarder"]
+fonction_utilisateurs_barcode=[1000000010107,1000000010046,1000000000016,1000000000207,1000000009002,1000000011098,1000000010015]
 
-fonction_produits=[]
-fonction_produits_barcode=[]
+fonction_produits=[u"Nouveau Produit",u"Désactiver Produit",u"Sauvegarder"]
+fonction_produits_barcode=[1000000010107,1000000010046,1000000010015]
 
-fonction_scanners=[]
-fonction_scanners_barcode=[]
-
-fonction_gestion=[u"Shutdown",u"Initialiser",u"Générer"]
-fonction_gestion_barcode=[1000000011067,1000000011012,1000000011005]
+fonction_gestion=[u"Éteindre"]
+fonction_gestion_barcode=[1000000011067]
 
 clavier=[1,2,3,4,5,6,7,8,9,u"DEL",0,u"EFF"]
 
+def findChiffre(listeMenu,barcode):
+    chiffre = 1
+    for anEntry in listeMenu:
+	if anEntry == unicode(barcode):
+            return chiffre
+        chiffre += 1
+    return None
+
 global nombre
-nombre=Tkinter.IntVar()
+nombre = Tkinter.IntVar()
 nombre.set(u"0")
 
 global t,x
 t,x=0,0
 
+global contexte_unique
+contexte_unique=None
+
 #--------Gestion du Clavier--------#
 
 def destroy_frame():
-    global CentralMenu
-    for widget in CentralMenu.winfo_children():
+    global contexte_unique
+    for widget in contexte_unique.LeftMenu.winfo_children():
         widget.destroy()
+    reset_clavier()
 
-def choice(demande):
-    global contexte_unique
-    destroy_frame()
-    if demande==u"menu":
-        Principal()
-    elif demande==u"fonction":
-        Fonction()
-    elif demande==u"ticket":
-        contexte_unique.listeGauche = 2
-        contexte_unique.listeGaucheNow = True
-    elif demande==u"liste":
-        contexte_unique.listeGauche = 1        
-        contexte_unique.listeGaucheNow = True
-    elif demande==u"plus":
-        contexte_unique.inputQueue.put(CB_Suivant)
-        contexte_unique.listeGauche = 1
-        contexte_unique.listeGaucheNow = True
-    elif demande==u"moins":
-        contexte_unique.inputQueue.put(CB_Precedent)
-        contexte_unique.listeGaucheNow = True
-    elif demande==u"point":
-        Point()
+def choicePrincipal():
+	global contexte_unique
+        contexte_unique.PrincipalButton.config(relief=Tkinter.RAISED)
+	destroy_frame()
+	Principal()
+	contexte_unique.build_tkdisplay()
+	
+def choiceFonction():
+	global contexte_unique
+        contexte_unique.FonctionButton.config(relief=Tkinter.RAISED)
+	destroy_frame()
+	Fonction()
+	
+def choiceTicket():
+	global contexte_unique
+	if contexte_unique.mode == CB_Vente_Produits:
+	        contexte_unique.TicketButton.config(relief=Tkinter.RAISED)
+		destroy_frame()
+		contexte_unique.listeGauche = 2
+		contexte_unique.listeGaucheNow = True
+		contexte_unique.tk_facture()
+	elif contexte_unique.mode in [CB_Stock, CB_Scanners, CB_Collabs]:
+	        contexte_unique.TicketButton.config(relief=Tkinter.RAISED)
+		destroy_frame()
+		Ticket()
+	elif contexte_unique.qty_choisie == barbaraConfiguration.omniPIN:
+	    contexte_unique.inputQueue.put(CB_User_BARBARA)
 
-contexte_unique=None
-
-def touch(fonction,chiffre):
-    global contexte_unique
-    if fonction==u"principal":
-        barcode=principal_barcode[chiffre]
-        contexte_unique.inputQueue.put(str(barcode))
-        destroy_frame()
-        contexte_unique.listeGauche = 1
-        contexte_unique.listeGaucheNow = (str(barcode) != CB_Gestion) and (str(barcode) != CB_Vente_Bracelets)
-        if str(barcode)==CB_Vente_Bracelets:
-			contexte_unique.mode = CB_Vente_Bracelets
-			choice(u"point")
-        elif str(barcode)==CB_Vente_Produits:
-			#contexte_unique.mode = CB_Vente_Produits
-			choice(u"liste")
-        elif str(barcode)==CB_Collabs:
-			contexte_unique.mode = CB_Collabs
-			choice(u"liste")
-        elif str(barcode)==CB_Stock:
-			#contexte_unique.mode = CB_Stock
-			choice(u"liste")
-        elif str(barcode)==CB_Scanners:
-			contexte_unique.mode = CB_Scanners
-			choice(u"liste")
-        elif str(barcode)==CB_Gestion:
-			contexte_unique.mode = CB_Gestion
-			choice(u"fonction")
-    elif fonction==u"liste":
-		if contexte_unique.mode == CB_Vente_Produits:
-			contexte_unique.inputQueue.put(chiffre)
-		elif contexte_unique.mode == CB_Stock:
-			barcode=liste_barcode[chiffre]
-			contexte_unique.inputQueue.put(str(barcode))      
-    elif fonction==u"ticket":
-        barcode=ticket_barcode[chiffre]
-        contexte_unique.inputQueue.put(str(barcode))
-        contexte_unique.listeGauche = 2
-        contexte_unique.listeGaucheNow = (str(barcode) != CB_Gestion) and (str(barcode) != CB_Vente_Bracelets)
-    elif fonction==u"fonction":
-        barcode=principal_barcode[chiffre]
-        if str(barcode)==CB_Vente_Produits:
-            barcode=fonction_vente_produits_barcode[chiffre]
-            contexte_unique.inputQueue.put(str(barcode))
-        elif str(barcode)==CB_Vente_Bracelets:
-            barcode=fonction_vente_bracelets_barcode[chiffre]
-            contexte_unique.inputQueue.put(str(barcode))
-        elif str(barcode)==CB_Collabs :
-            barcode=fonction_utilisateurs_barcode[chiffre]
-            contexte_unique.inputQueue.put(str(barcode))
-        elif str(barcode)==CB_Gestion:
-            barcode=fonction_gestion_barcode[chiffre]
-            contexte_unique.inputQueue.put(str(barcode))
+def choiceListe():
+	global contexte_unique
+	if contexte_unique.mode != CB_Gestion:
+	        contexte_unique.ListeButton.config(relief=Tkinter.RAISED)
+		destroy_frame()
+		contexte_unique.listeGauche = 1
+		contexte_unique.listeGaucheNow = True
+	
+def choicePlus():
+	global contexte_unique
+	if contexte_unique.mode != CB_Gestion:
+	        contexte_unique.PlusButton.config(relief=Tkinter.RAISED)
+		destroy_frame()
+		contexte_unique.inputQueue.put(CB_Suivant)
+		contexte_unique.listeGauche = 1
+		contexte_unique.listeGaucheNow = True
+			
+def choiceMoins():
+	global contexte_unique
+	if contexte_unique.mode != CB_Gestion:
+	        contexte_unique.MoinsButton.config(relief=Tkinter.RAISED)
+		destroy_frame()
+		contexte_unique.inputQueue.put(CB_Precedent)
+		contexte_unique.listeGaucheNow = True
+        
+def choicePoint():
+	global contexte_unique
+        contexte_unique.PointButton.config(relief=Tkinter.RAISED)
+	destroy_frame()
+	Point()
 
 def Principal():
-    global CentralMenu
+    global contexte_unique
+    contexte_unique.reinit(contexte_unique.user,None)
+    contexte_unique.menu = contexte_unique.PrincipalButton #.set("principal")
+
+    if contexte_unique.user:
+         acc = contexte_unique.user.access()
+         if acc == 'g':
+             allowed = principal
+         elif acc == 'a':
+             allowed = [principal[0],principal[1]]
+         elif acc == 'b':
+             allowed = [principal[0]]
+         elif acc == 'c':
+             allowed = [principal[1]]
+         else:
+             allowed = []
+    else:
+         allowed = []
+
+    #FrameMenu.focus_set()
+    #chiffre = None
+    #if contexte_unique.mode:
+    #    chiffre = findChiffre(principal,contexte_unique.mode)
     for key in range(len(principal)):
-        texte=""+str(key+1)+" "+principal[key]
-        Tkinter.Button(CentralMenu,text=texte,bg=color_principal,fg=color_texte,font=size26,anchor=Tkinter.W,command=lambda key=key:touch("principal",key)).pack(fill=Tkinter.X,expand=1,side=Tkinter.TOP)
+	if principal[key] in allowed:
+            texte=" "+unicode(key+1)+") "+principal[key]
+            aButton = Tkinter.Button(contexte_unique.LeftMenu,text=texte,bg=color_principal,fg=color_texte,font=size26,anchor=Tkinter.W,command=lambda key=key: touchPrincipal(key+1)).pack(fill=Tkinter.X,expand=1,side=Tkinter.TOP)
+        #if chiffre == (key+1):
+        #    aButton.focus_set()
 
-def Liste():
-    global CentralMenu, contexte_unique
-    chiffre=0
-    if (contexte_unique.mode==CB_Vente_Produits):
-        refset = c.AllProducts.elements.keys()[contexte_unique.debut : contexte_unique.debut+TAILLE_ECRAN]
-        produit={}
-        for key in refset:
-            objet = c.AllProducts.elements[key]
-            texte = objet.fields[u'price'] + u" € | " + objet.fields[u'name'] + u" "
-            produit[chiffre]=objet.fields[u'barcode']
-            Tkinter.Button(CentralMenu,text=texte,bg=color_liste,fg=color_texte,font=size15,anchor=Tkinter.W,command=lambda chiffre=chiffre:touch("liste",produit[chiffre])).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
-            chiffre+=1
-    if (contexte_unique.mode == CB_Stock):
-        refset = c.AllProducts.elements.keys()[contexte_unique.debut : contexte_unique.debut+TAILLE_ECRAN]
-        produit={}
-        for key in refset:
-            objet = c.AllProducts.elements[key]
-            texte = objet.fields[u'price'] + u" € | " + objet.fields[u'name'] + u" "
-            produit[key]=chiffre
-            Tkinter.Button(CentralMenu,text=texte,bg=color_liste,fg=color_texte,font=size15,anchor=Tkinter.W,command=lambda key=key:touch("liste",produit[key])).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
-            chiffre+=1
-    elif(contexte_unique.mode == CB_Collabs):
-        refset = c.AllUsers.elements.keys()[contexte_unique.debut : contexte_unique.debut+TAILLE_ECRAN]
-        user={}
-        for key in refset:
-            objet = c.AllUsers.elements[key]
-            texte = objet.fields[u'name'] + u" | " + objet.fields[u'access'] + u" "
-            user[key]=chiffre
-            Tkinter.Button(CentralMenu,text=texte,bg=color_liste,fg=color_texte,font=size15,anchor=Tkinter.W,command=lambda key=key:touch("liste",user[key])).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
-            chiffre+=1
-    elif (contexte_unique.mode == CB_Scanners):
-        scan={}
-        refset = c.AllScanners.elements.keys()[contexte_unique.debut : contexte_unique.debut+TAILLE_ECRAN]
-        for key in refset:
-            objet = c.AllScanners.elements[key]
-            texte = objet.fields['name'] + " " + objet.fields['pin']
-            scan[key]=chiffre
-            Tkinter.Button(CentralMenu,text=texte,bg=color_liste,fg=color_texte,font=size15,anchor=Tkinter.W,command=lambda key=key:touch("liste",scan[key])).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
-            chiffre+=1
-
-def Ticket():
-    global CentralMenu
-    for key in range(len(ticket)):
-        texte=""+str(key+1)+" "+ticket[key]
-        Tkinter.Button(CentralMenu,text=texte,bg=color_ticket,fg=color_texte,font=size14,anchor=Tkinter.W,padx=0,pady=0,command=lambda key=key:touch("ticket",key)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
+def Fonction():
+    global contexte_unique
+    contexte_unique.menu = contexte_unique.FonctionButton #.set("fonction")
+    print "Mode="+unicode(contexte_unique.mode)
+    if contexte_unique.mode == CB_Vente_Produits:
+        for key in range(len(fonction_vente_produits)):
+            texte=" "+unicode(key+1)+") "+fonction_vente_produits[key]
+            Tkinter.Button(contexte_unique.LeftMenu,text=adaptText(len(fonction_vente_produits),texte),bg=color_fonction,fg=color_texte,font=size20,anchor=Tkinter.W,padx=0,pady=0,command=lambda key=key: touchFonction(key+1)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
+    if contexte_unique.mode == CB_Vente_Bracelets:
+        for key in range(len(fonction_vente_bracelets)):
+            texte=" "+unicode(key+1)+") "+fonction_vente_bracelets[key]
+            Tkinter.Button(contexte_unique.LeftMenu,text=adaptText(len(fonction_vente_bracelets),texte),bg=color_fonction,fg=color_texte,font=size20,anchor=Tkinter.W,padx=0,pady=0,command=lambda key=key: touchFonction(key+1)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
+    elif contexte_unique.mode == CB_Collabs:
+        for key in range(len(fonction_utilisateurs)):
+            texte=" "+unicode(key+1)+") "+fonction_utilisateurs[key]
+            Tkinter.Button(contexte_unique.LeftMenu,text=adaptText(len(fonction_utilisateurs),texte),bg=color_fonction,fg=color_texte,font=size20,anchor=Tkinter.W,padx=0,pady=0,command=lambda key=key: touchFonction(key+1)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
+    elif contexte_unique.mode == CB_Gestion:
+        for key in range(len(fonction_gestion)):
+            texte=" "+unicode(key+1)+") "+fonction_gestion[key]
+            Tkinter.Button(contexte_unique.LeftMenu,text=adaptText(len(fonction_gestion),texte),bg=color_fonction,fg=color_texte,font=size20,anchor=Tkinter.W,padx=0,pady=0,command=lambda key=key: touchFonction(key+1)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)        
+    elif contexte_unique.mode == CB_Stock:
+        for key in range(len(fonction_produits)):
+            texte=" "+unicode(key+1)+") "+fonction_produits[key]
+            Tkinter.Button(contexte_unique.LeftMenu,text=adaptText(len(fonction_produits),texte),bg=color_fonction,fg=color_texte,font=size20,anchor=Tkinter.W,padx=0,pady=0,command=lambda key=key: touchFonction(key+1)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)        
 
 def ListeGauche():
     global contexte_unique
-    if contexte_unique.listeGaucheNow:
-        if contexte_unique.listeGauche == 2:
-            Ticket()
-        elif contexte_unique.listeGauche == 1:
-            Liste()
-        contexte_unique.listeGaucheNow = False 
-    
-def Fonction():
+    if contexte_unique.listeGaucheNow == True:
+		if contexte_unique.listeGauche == 2:
+			Ticket()
+		elif contexte_unique.listeGauche == 1:
+			Liste()
+		contexte_unique.listeGaucheNow = False
+    if contexte_unique.menu:
+        contexte_unique.menu.focus_set()
+        contexte_unique.menu.config(relief=Tkinter.SUNKEN)
+
+def Ticket():
     global contexte_unique
-    print contexte_unique.mode
-    if contexte_unique.mode == CB_Vente_Produits:
-        for key in range(len(fonction_vente_produits)):
-            texte=""+str(key+1)+" "+fonction_vente_produits[key]
-            Tkinter.Button(CentralMenu,text=texte,bg=color_fonction,fg=color_texte,font=size15,anchor=Tkinter.W,padx=0,pady=0,command=lambda key=key:touch("fonction",key)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
-    if contexte_unique.mode == CB_Vente_Bracelets:
-        for key in range(len(fonction_vente_bracelets)):
-            texte=""+str(key+1)+" "+fonction_vente_bracelets[key]
-            Tkinter.Button(CentralMenu,text=texte,bg=color_fonction,fg=color_texte,font=size15,anchor=Tkinter.W,padx=0,pady=0,command=lambda key=key:touch("fonction",key)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
-    elif contexte_unique.mode == CB_Collabs:
-        for key in range(len(fonction_utilisateurs)):
-            texte=""+str(key+1)+" "+fonction_utilisateurs[key]
-            Tkinter.Button(CentralMenu,text=texte,bg=color_fonction,fg=color_texte,font=size15,anchor=Tkinter.W,padx=0,pady=0,command=lambda key=key:touch("fonction",key)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
-    elif contexte_unique.mode == CB_Gestion:
-        for key in range(len(fonction_gestion)):
-            texte=""+str(key+1)+" "+fonction_gestion[key]
-            Tkinter.Button(CentralMenu,text=texte,bg=color_fonction,fg=color_texte,font=size15,anchor=Tkinter.W,padx=0,pady=0,command=lambda key=key:touch("fonction",key)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)        
+    if contexte_unique.mode in [CB_Stock, CB_Scanners, CB_Collabs] :
+        frame = StartPage(parent=contexte_unique.LeftMenu)
+        frame.grid(row=0, column=0, sticky="nsew")
+    elif contexte_unique.mode == CB_Vente_Produits:
+	    contexte_unique.menu = contexte_unique.TicketButton #.set("ticket")
+	    chiffre=0
+	    produit={}
+	    refset = contexte_unique.prev_panier.keys() [contexte_unique.debut : contexte_unique.debut+TAILLE_ECRAN]
+	    bestFont = chooseFont(len(refset))
+	    for element in refset:
+			price = element.getCents()/100.0 #on met le prix en float
+			produit[element]=chiffre
+			texte = u" " + unicode(chiffre+1) + u") " + unicode(contexte_unique.prev_panier[element]) + u" x " + element.fields[u"name"][:15] + u" @ " + unicode(element.fields[u"price"])+u"€"
+			Tkinter.Button(contexte_unique.LeftMenu,text=adaptText(len(refset),texte),bg=color_ticket,fg=color_texte,font=bestFont,anchor=Tkinter.W,padx=0,pady=0,command=lambda element=element: touchTicket(produit[element]+1)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
+			chiffre+=1
+
+def Liste():
+    global contexte_unique
+    contexte_unique.menu = contexte_unique.ListeButton #.set("liste")
+    chiffre=0
+    if (contexte_unique.mode == CB_Vente_Produits or contexte_unique.mode == CB_Stock):
+        refset = c.AllProducts.elements.keys()[contexte_unique.debut : contexte_unique.debut+TAILLE_ECRAN]
+        bestFont = chooseFont(len(refset))
+        produit={}
+        for key in refset:
+            objet = c.AllProducts.elements[key]
+            texte = u" " + unicode(chiffre+1) + u") " + objet.fields[u'price'] + u"€ : " + objet.fields[u'name'][:15]
+            produit[key]=chiffre
+            Tkinter.Button(contexte_unique.LeftMenu,text=adaptText(len(refset),texte),bg=color_liste,fg=color_texte,font=size17,anchor=Tkinter.W,command=lambda key=key: touchListe(produit[key]+1)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
+            chiffre+=1
+    elif(contexte_unique.mode == CB_Collabs):
+        refset = c.AllUsers.elements.keys()[contexte_unique.debut : contexte_unique.debut+TAILLE_ECRAN]
+        bestFont = chooseFont(len(refset))
+        user={}
+        for key in refset:
+            objet = c.AllUsers.elements[key]
+            texte = u" " + unicode(chiffre+1) + u") " + objet.fields[u'name'] + u" : " + objet.fields[u'access']
+            user[key]=chiffre
+            Tkinter.Button(contexte_unique.LeftMenu,text=adaptText(len(refset),texte),bg=color_liste,fg=color_texte,font=size19,anchor=Tkinter.W,command=lambda key=key: touchListe(user[key]+1)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
+            chiffre+=1
+    elif (contexte_unique.mode == CB_Scanners):
+        refset = c.AllScanners.elements.keys()[contexte_unique.debut : contexte_unique.debut+TAILLE_ECRAN]
+        bestFont = chooseFont(len(refset))
+        scan={}
+        for key in refset:
+            objet = c.AllScanners.elements[key]
+            texte = u" " + unicode(chiffre+1) + u") " + objet.fields['name'] + u" : " + objet.fields['pin']
+            scan[key]=chiffre
+            Tkinter.Button(contexte_unique.LeftMenu,text=texte,bg=color_liste,fg=color_texte,font=size19,anchor=Tkinter.W,command=lambda key=key: touchListe(scan[key]+1)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
+            chiffre+=1
+
+font_vKeyboard = ("Helvetica", 11, "bold")
+font_vKeyboardSpecialKeys = ("Helvetica", 11, "bold")
+
+class StartPage(ttk.Frame):
+    def __init__(self, parent):
+
+        ttk.Style().configure("vKeyboard.TButton", font=font_vKeyboard)
+        ttk.Style().configure("vKeyboardSpecial.TButton", font=font_vKeyboardSpecialKeys)
+
+        ttk.Frame.__init__(self, parent)
+        self.entry1 = ttk.Entry(self, width=40)
+        self.entry1.pack(side="top", pady=14)
+
+        self.frame1 = ttk.Frame(self, width=480, height=360)
+        self.frame1.pack(side="top", pady=8)
+
+        self.keysize = 3
+        self.entry1.bind("<FocusIn>", lambda e:  self.show_vKeyboard(1))
+
+        self.kb = vKeyboard(attach=self.entry1,
+                            x=self.entry1.winfo_rootx(),
+                            y=self.entry1.winfo_rooty() + self.entry1.winfo_reqheight(),
+                            keysize=self.keysize,
+                            parent=self.frame1,
+		            callback=lambda page=self: assignName(page))
+
+    def show_vKeyboard(self):
+            self.frame1.destroy()
+            self.kb.destroy()
+
+            self.frame1 = ttk.Frame(self, width=480, height=360)
+            self.frame1.pack(side="top", pady=8)
+            self.kb = vKeyboard(attach=self.entry1,
+                                 x=self.entry1.winfo_rootx(),
+                                 y=self.entry1.winfo_rooty() + self.entry1.winfo_reqheight(),
+                                 keysize=self.keysize,
+                                 parent=self.frame1,
+		                 callback=lambda page=self: assignName(page))
+
+def assignName(page):
+    global contexte_unique
+    contexte_unique.nom_choisi = page.entry1.get()
+    contexte_unique.number()
+    choiceFonction()
 
 def Point():
-    global x
+    global x,contexte_unique
+    contexte_unique.menu = contexte_unique.PointButton #.set("point")
     for ligne in range (1,5):
         for colonne in range (1,4):
             chiffre=clavier[x]
-            Tkinter.Button(CentralMenu, text=chiffre, command=lambda chiffre=chiffre:keyboard(chiffre),width=tile_width/110,height=tile_height/220,font=size38,bg=color_point,fg=color_texte, pady=15).grid(row=ligne, column=colonne)
+            Tkinter.Button(contexte_unique.LeftMenu, text=chiffre, command=lambda chiffre=chiffre:touchPoint(chiffre),width=tile_width/110,height=tile_height/295,font=size38,bg=color_point,fg=color_texte, pady=15).grid(row=ligne, column=colonne)
             colonne+=1
             x+=1
         ligne+=1
@@ -1306,22 +1419,101 @@ def reset_clavier():
     global t
     t=0
     nombre.set(u"0")
-       
-def keyboard(qte):
+
+
+def touch(chiffre):
+        global contexte_unique
+	if contexte_unique.menu==contexte_unique.PrincipalButton:
+		touchPrincipal(chiffre)
+	elif contexte_unique.menu==contexte_unique.ListeButton:
+		touchListe(chiffre)		
+	elif contexte_unique.menu==contexte_unique.TicketButton:
+		touchTicket(chiffre)
+	elif contexte_unique.menu==contexte_unique.FonctionButton:
+		touchFonction(chiffre)
+	elif contexte_unique.menu==contexte_unique.PointButton:
+		touchPoint(chiffre)
+
+def beginLeftMenu(barcode):
+    global contexte_unique
+    barcode = unicode(barcode)
+    if barcode==CB_Vente_Bracelets:
+	choicePoint()
+    elif barcode==CB_Vente_Produits:
+	choiceListe()
+    elif barcode==CB_Collabs:
+	choiceListe()
+    elif barcode==CB_Stock:
+	choiceListe()
+    elif barcode==CB_Scanners:
+	choiceListe()
+    elif barcode==CB_Gestion:
+	choiceFonction()
+    elif contexte_unique.PrincipalButton:
+        choicePrincipal()
+
+def touchPrincipal(chiffre):
+	global contexte_unique
+        try:
+	    barcode=unicode(principal_barcode[chiffre-1])
+	    contexte_unique.inputQueue.put(barcode)
+	    contexte_unique.mode = barcode
+            beginLeftMenu(barcode)
+        except IndexError:
+            choicePrincipal()
+
+def touchListe(chiffre):
+	global contexte_unique
+        try:
+	    barcode=liste_barcode[chiffre-1]
+	    contexte_unique.inputQueue.put(unicode(barcode))
+	    reset_clavier()
+        except IndexError:
+            choiceListe()
+
+def touchTicket(chiffre):
+	global contexte_unique
+        try:
+	    barcode=ticket_barcode[chiffre-1]
+	    contexte_unique.inputQueue.put(unicode(barcode))
+        except IndexError:
+            choiceTicket()
+
+def touchFonction(chiffre):
+	global contexte_unique
+	if chiffre == 0:
+		choicePrincipal()
+	elif contexte_unique.mode==CB_Vente_Produits:
+		barcode=fonction_vente_produits_barcode[chiffre-1]
+		contexte_unique.inputQueue.put(unicode(barcode))
+	elif contexte_unique.mode==CB_Vente_Bracelets:
+		barcode=fonction_vente_bracelets_barcode[chiffre-1]
+		contexte_unique.inputQueue.put(unicode(barcode))
+	elif contexte_unique.mode==CB_Collabs :
+		barcode=fonction_utilisateurs_barcode[chiffre-1]
+		contexte_unique.inputQueue.put(unicode(barcode))
+	elif contexte_unique.mode==CB_Gestion:
+		barcode=fonction_gestion_barcode[chiffre-1]
+		contexte_unique.inputQueue.put(unicode(barcode))
+	elif contexte_unique.mode==CB_Stock:
+		barcode=fonction_produits_barcode[chiffre-1]
+		contexte_unique.inputQueue.put(unicode(barcode))
+        else:
+                choiceFonction()
+              
+def touchPoint(qte):
     global t
-    global mem
     if qte==u"EFF":
         reset_clavier()
         contexte_unique.inputQueue.put(CB_Effacer_Nombre)
     elif qte==u"DEL":
-        t=(t-mem)/10
+        t=int(t/10)
         nombre.set(t)
-        contexte_unique.inputQueue.put(str(t+CB_Base_Nombre))
+        contexte_unique.inputQueue.put(unicode(t+CB_Base_Nombre))
     else:
-        mem=qte
         t=t*10+qte
         nombre.set(t)
-        contexte_unique.inputQueue.put(str(t+CB_Base_Nombre))
+        contexte_unique.inputQueue.put(unicode(t+CB_Base_Nombre))
 
 allContexte = { }
 # Classe contexte, c'est ici que l'on gère le code barre scanné
@@ -1348,16 +1540,15 @@ class Contexte (): #threading.Thread
         self.charge = False
         self.wait = datetime.datetime.now()
 
-        self.listeGauche = 1
-        self.listeGaucheNow = False
-
     def reinit(self,anUser, save_mode = None):
         self.user = anUser # Utilisateur loggé
         self.mode = save_mode
+        self.menu = None
         self.partial_init()
         self.tkdisplay_started = False
-        
         self.message = []
+        self.pref_qty = u"€ "
+        self.pref_nom = u"Nom:"
 
     def __init__(self,rank,scanid):
         #threading.Thread.__init__(self)
@@ -1373,20 +1564,33 @@ class Contexte (): #threading.Thread
 
         global screen_height, screen_width, screen_type
 
-        self.pref_qty = u"€ "
-        self.pref_nom = u"Nom:"
-        
+        self.listeGauche = 1
+        self.listeGaucheNow = False        
+
         self.logo = None
         self.image = None
         self.draw = None
 
-        print "="+str(screen_type)
+        self.FrameMenu=None
+        self.TopMenu=None
+        self.PrincipalButton=None
+        self.FonctionButton=None
+        self.TicketButton=None
+        self.ListeButton=None
+        self.PlusButton=None
+        self.MoinsButton=None
+        self.PointButton=None
+        self.LeftMenu=None
+
+        self.menu = None
+
+        print "screen_type="+unicode(screen_type)
 
         if screen_type==0:
             p_x = tile_width * (self.rank % 3)
             p_y = tile_height * int(self.rank / 3)
 
-            self.window = Tkinter.LabelFrame (tkdisplay_root, text = unicode(self.rank)+'#'+(unicode(self.currScanner.id)+'#'+unicode(self.currScanner.fields["name"])) if self.currScanner else u"", borderwidth = 2, labelanchor = 'n', bg = color_window,fg = "white")
+            self.window = Tkinter.LabelFrame (tkdisplay_root, text = unicode(self.rank)+'#'+(unicode(self.currScanner.id)+'#'+unicode(self.currScanner.fields["name"])) if self.currScanner else u"", borderwidth = 2, labelanchor = 'n', bg = color_window,fg = color_texte)
             self.window.place(height = tile_height, width = tile_width, x=p_x, y=p_y )
             self.l_frame = self.window
 
@@ -1394,35 +1598,76 @@ class Contexte (): #threading.Thread
             p_x=tile_width
             p_y=0
 
-            global FrameMenu, TopMenu, FonctionButton, TicketButton, ListeButton, PlusButton, MoinsButton, PointButton, CentralMenu
-        
-            FrameMenu=Tkinter.Frame(tkdisplay_root,width=tile_width,height=tile_height)#,width=tile_width,height=tile_height,padx=0,pady=0)
-            FrameMenu.pack(anchor=Tkinter.NW,expand=1)
-
-            TopMenu=Tkinter.Frame(FrameMenu,width=tile_width,height=tile_height/10)#,width=tile_width,height=tile_height/10,padx=0,pady=0)
-            TopMenu.pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)#,padx=0,pady=0,ipadx=0,ipady=0)
-
-            MenuButton=Tkinter.Button(TopMenu,text="/0",bg=color_index,fg=color_texte,height=tile_height/500,font=size24,command=lambda menu="menu":choice(menu)).pack(fill=Tkinter.X,expand=1,side=Tkinter.LEFT)
-            FonctionButton=Tkinter.Button(TopMenu,text="/",bg=color_fonction,fg=color_texte,font=size24,command=lambda fonction="fonction":choice(fonction)).pack(fill=Tkinter.X,expand=1,side=Tkinter.LEFT)
-            TicketButton=Tkinter.Button(TopMenu,text=u"*",bg=color_ticket,fg=color_texte,font=size24,command=lambda ticket="ticket":choice(ticket)).pack(fill=Tkinter.X,expand=1,side=Tkinter.LEFT)
-            ListeButton=Tkinter.Button(TopMenu,text=u"Entr",bg=color_liste,fg=color_texte,font=size24,command=lambda liste="liste":choice(liste)).pack(fill=Tkinter.X,expand=1,side=Tkinter.LEFT)
-            PlusButton=Tkinter.Button(TopMenu,text=u"+",bg=color_plus,fg=color_texte,font=size24,command=lambda plus="plus":choice(plus)).pack(fill=Tkinter.X,expand=1,side=Tkinter.LEFT)
-            MoinsButton=Tkinter.Button(TopMenu,text=u"-",bg=color_moins,fg=color_texte,font=size24,command=lambda moins="moins":choice(moins)).pack(fill=Tkinter.X,expand=1,side=Tkinter.LEFT)
-            PointButton=Tkinter.Button(TopMenu,text=u".",bg=color_point,fg=color_texte,font=size24,command=lambda point="point":choice(point)).pack(fill=Tkinter.X,expand=1,side=Tkinter.LEFT)
-
-            CentralMenu=Tkinter.Frame(FrameMenu,width=tile_width,height=8*tile_height/10)
-            CentralMenu.pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
-
-            Principal()
-
             global contexte_unique
             contexte_unique=self
+
+            self.FrameMenu=Tkinter.Frame(tkdisplay_root,width=tile_width,height=tile_height,bg=color_window)#,width=tile_width,height=tile_height,padx=0,pady=0)
+            self.FrameMenu.bind_all('<KP_Divide>',func=lambda event: choiceFonction())
+            self.FrameMenu.bind_all('<KP_Multiply>',func=lambda event: choiceTicket())
+            self.FrameMenu.bind_all('<KP_Enter>',func=lambda event: choiceListe())
+            self.FrameMenu.bind_all('<KP_Add>',func=lambda event: choicePlus())
+            self.FrameMenu.bind_all('<KP_Subtract>',func=lambda event: choiceMoins())
+            self.FrameMenu.bind_all('<KP_Decimal>',func=lambda event: choicePoint())
+            self.FrameMenu.bind_all('<KP_Delete>',func=lambda event: touchPoint("DEL"))
+            self.FrameMenu.bind_all('<KP_0>',func=lambda event: touch(0))
+            self.FrameMenu.bind_all('<KP_1>',func=lambda event: touch(1))
+            self.FrameMenu.bind_all('<KP_2>',func=lambda event: touch(2))
+            self.FrameMenu.bind_all('<KP_3>',func=lambda event: touch(3))
+            self.FrameMenu.bind_all('<KP_4>',func=lambda event: touch(4))
+            self.FrameMenu.bind_all('<KP_5>',func=lambda event: touch(5))
+            self.FrameMenu.bind_all('<KP_6>',func=lambda event: touch(6))
+            self.FrameMenu.bind_all('<KP_7>',func=lambda event: touch(7))
+            self.FrameMenu.bind_all('<KP_8>',func=lambda event: touch(8))
+            self.FrameMenu.bind_all('<KP_9>',func=lambda event: touch(9))        
+            self.FrameMenu.bind_all('/',func=lambda event: choiceFonction())
+            self.FrameMenu.bind_all('*',func=lambda event: choiceTicket())
+            self.FrameMenu.bind_all('<Return>',func=lambda event: choiceListe())
+            self.FrameMenu.bind_all('+',func=lambda event: choicePlus())
+            self.FrameMenu.bind_all('-',func=lambda event: choiceMoins())
+            self.FrameMenu.bind_all('.',func=lambda event: choicePoint())
+            self.FrameMenu.bind_all('<Delete>',func=lambda event: touchPoint("DEL"))
+            self.FrameMenu.bind_all('<BackSpace>',func=lambda event: touchPoint("DEL"))
+            self.FrameMenu.bind_all('0',func=lambda event: touch(0))
+            self.FrameMenu.bind_all('1',func=lambda event: touch(1))
+            self.FrameMenu.bind_all('2',func=lambda event: touch(2))
+            self.FrameMenu.bind_all('3',func=lambda event: touch(3))
+            self.FrameMenu.bind_all('4>',func=lambda event: touch(4))
+            self.FrameMenu.bind_all('5',func=lambda event: touch(5))
+            self.FrameMenu.bind_all('6',func=lambda event: touch(6))
+            self.FrameMenu.bind_all('7',func=lambda event: touch(7))
+            self.FrameMenu.bind_all('8',func=lambda event: touch(8))
+            self.FrameMenu.bind_all('9',func=lambda event: touch(9))        
+            self.FrameMenu.pack(anchor=Tkinter.NW)
+
+            self.TopMenu=Tkinter.Frame(self.FrameMenu,width=tile_width,height=tile_height/8,bg=color_window)#,width=tile_width,height=tile_height/10,padx=0,pady=0)
+            self.TopMenu.pack(fill=Tkinter.BOTH,side=Tkinter.TOP)#,padx=0,pady=0,ipadx=0,ipady=0)
+
+            self.PrincipalButton=Tkinter.Button(self.TopMenu,text="/0",bg=color_fonction0,highlightbackground=color_fonction0, highlightcolor=color_texte, fg=color_texte,highlightthickness=2,height=tile_height/500,font=size24,command=choicePrincipal)
+            self.PrincipalButton.pack(fill=Tkinter.X,side=Tkinter.LEFT)
+            self.FonctionButton=Tkinter.Button(self.TopMenu,text="/",bg=color_fonction,fg=color_texte,font=size24,command=choiceFonction)
+            self.FonctionButton.pack(fill=Tkinter.X,side=Tkinter.LEFT)
+            self.TicketButton=Tkinter.Button(self.TopMenu,text=u"*",bg=color_ticket,fg=color_texte,font=size24,command=choiceTicket)
+            self.TicketButton.pack(fill=Tkinter.X,side=Tkinter.LEFT)
+            self.ListeButton=Tkinter.Button(self.TopMenu,text=u"Entr",bg=color_liste,fg=color_texte,font=size24,command=choiceListe)
+            self.ListeButton.pack(fill=Tkinter.X,side=Tkinter.LEFT)
+            self.PlusButton=Tkinter.Button(self.TopMenu,text=u"+",bg=color_plus,fg=color_texte,font=size24,command=choicePlus)
+            self.PlusButton.pack(fill=Tkinter.X,side=Tkinter.LEFT)
+            self.MoinsButton=Tkinter.Button(self.TopMenu,text=u"-",bg=color_moins,fg=color_texte,font=size24,command=choiceMoins)
+            self.MoinsButton.pack(fill=Tkinter.X,side=Tkinter.LEFT)
+            self.PointButton=Tkinter.Button(self.TopMenu,text=u".",bg=color_point,fg=color_texte,font=size24,command=choicePoint)
+            self.PointButton.pack(fill=Tkinter.X,side=Tkinter.LEFT)
+
+            self.LeftMenu=Tkinter.Frame(self.FrameMenu,width=tile_width,height=tile_height,bg=color_window)
+            self.LeftMenu.pack(fill=Tkinter.BOTH,side=Tkinter.TOP)
+
+            Principal()
 
             self.window = Tkinter.Frame (tkdisplay_root,borderwidth = 2, bg = color_window)
             self.window.place(height = tile_height, width = tile_width, x=p_x, y=p_y )
             self.l_frame = self.window
 
     def setQty(self,val):
+        val = int(val)
         if val <= 0:
             self.qty_choisie = -1
             self.z5 = 0
@@ -1432,7 +1677,7 @@ class Contexte (): #threading.Thread
             self.z1 = 0
             self.unite = 0
         else:
-            val = str(val)
+            val = unicode(val)
             if len(val) >= 1:
                 self.unite = int(val[-1])
                 if len(val) >= 2:
@@ -1465,6 +1710,14 @@ class Contexte (): #threading.Thread
         key = elements.keys()[index]
         return elements[key]
 
+    def syncChoixTicket(self,index,elements):
+        self.syncListe(elements)
+        index = index + self.debut
+        if index >= self.fin:
+            return None
+        key = elements.keys()[index]
+        return key
+
     # Fonction TKINTER : affiche le numero de l'utilisateur en bas à droite
     def number(self) :
 
@@ -1474,18 +1727,19 @@ class Contexte (): #threading.Thread
         self.pos_Y = frame_height-45
         self.pos_X = 10
 
-        if self.t_qty_nbre:
-            self.canevas.delete(self.t_qty_nbre)
-        elif screen_type == 0:
-            # was self.rank
-            t_number = Tkinter.Label(self.canevas, text = self.currScanner.fields["name"] ,background = "yellow", foreground = 'black', font = size26)
-            t_number.place(anchor=Tkinter.SE, x = frame_width, y = frame_height) #positionnement
-            
-        self.t_qty_nbre = self.canevas.create_text(self.pos_X, self.pos_Y-4, anchor = 'nw', fill = color_debit, font = size26)
-        if self.qty_choisie != -1:
-            self.canevas.itemconfig(self.t_qty_nbre,text=self.pref_qty+unicode(self.qty_choisie)+u"  "+self.pref_nom+self.nom_choisi)
-        else:
-            self.canevas.itemconfig(self.t_qty_nbre,text=self.pref_nom+self.nom_choisi )
+	if self.canevas:
+	        if self.t_qty_nbre:
+	            self.canevas.delete(self.t_qty_nbre)
+	        elif screen_type == 0:
+	            # was self.rank
+	            t_number = Tkinter.Label(self.canevas, text = self.currScanner.fields["name"] ,background = "yellow", foreground = 'black', font = size26)
+	            t_number.place(anchor=Tkinter.SE, x = frame_width, y = frame_height) #positionnement
+	            
+		self.t_qty_nbre = self.canevas.create_text(self.pos_X, frame_height, anchor = 'sw', fill = color_debit, font = size22)
+	        if self.qty_choisie != -1:
+	            self.canevas.itemconfig(self.t_qty_nbre,text=self.pref_qty+unicode(self.qty_choisie)+u"\n"+self.pref_nom+self.nom_choisi)
+	        else:
+	            self.canevas.itemconfig(self.t_qty_nbre,text=self.pref_nom+self.nom_choisi )
 
 
     # Fonction TKINTER : permet d'inserer un interligne d'une taille régulable 
@@ -1538,9 +1792,9 @@ class Contexte (): #threading.Thread
 
                
         #Heure
-        strnow = unicode(datetime.datetime.now().strftime("%H:%M"))
-        t_time = Tkinter.Label(self.canevas, text = strnow ,background = color_canevas, foreground = color_header, font = size18) 
-        t_time.place(anchor=Tkinter.NE, x = frame_width , y = 1) #positionnement
+        #strnow = unicode(datetime.datetime.now().strftime("%H:%M"))
+        #t_time = Tkinter.Label(self.canevas, text = strnow ,background = color_canevas, foreground = color_header, font = size18) 
+        #t_time.place(anchor=Tkinter.NE, x = frame_width , y = 1) #positionnement
         
         #Banière commune
         if self.user != None :
@@ -1549,11 +1803,11 @@ class Contexte (): #threading.Thread
                 t_mode = Tkinter.Label(self.canevas, text = modes[self.mode],background = color_canevas, foreground = color_header, font = size18)
                 
             else :
-                t_mode = Tkinter.Label(self.canevas, text = "Choisir Mode",background = color_canevas, foreground = color_header, font = size18)
+                t_mode = Tkinter.Label(self.canevas, text = "Choix Mode",background = color_canevas, foreground = color_header, font = size18)
         else :
             t_user = Tkinter.Label(self.canevas, text = " Identifiez vous ", background = "white", foreground = 'black' , font = size18)
             t_mode = Tkinter.Label(self.canevas, text = " ",background = color_canevas, foreground = color_header, font = size18)
-        t_user.place(anchor=Tkinter.N, x = frame_width/2, y = 1) #positionnement
+        t_user.place(anchor=Tkinter.NE, x = frame_width, y = 1) #positionnement
         
         t_mode.place(x = 1, y = 1) #positionnement: pas de calcul ici, car on part du début : (1,1)
 
@@ -1708,57 +1962,49 @@ class Contexte (): #threading.Thread
             if self.client == None :
                 return
                 
-            self.ensure_tkdisplay()
-            if self.qty_choisie < 0 :
+            self.tk_client(pos_line = self.pos_Y)
+            self.saut_de_ligne(40) 
+
+            if self.qty_choisie <= 0 :
                 montant = barbaraConfiguration.defaultAmount
+		self.setQty(montant)
+		self.qty_choisie = montant
             else:
                 montant = self.qty_choisie
 
             if charge :
-                # barcode
-                self.pos_X = (frame_width-4)/2 #determination en X de la position du Label : ici on centre
-                t_barcode = self.canevas.create_text(self.pos_X, self.pos_Y, text = self.client.fields['barcode'], fill = color_client, font = size26)
-
-                #saut de ligne
-                self.saut_de_ligne() 
-
-                self.pos_X = frame_width * 0.5 #determination en X de la position du Label : 2/5
-                t_montant = self.canevas.create_text(self.pos_X, self.pos_Y, anchor = "center",text = "Montant : " + unicode(montant) + screen.euro, fill = color_header, font = size30)
-                    
-                #saut de ligne
-                self.saut_de_ligne() 
+                self.saut_de_ligne(40) 
 
                 self.pos_X = frame_width/2  #determination en X de la position du Label : ici on centre
                 t_msg = self.canevas.create_text(self.pos_X, self.pos_Y, text = "Cash ou Carte ?" , fill = color_message, font = size20)
 
                 #saut de ligne
-                self.saut_de_ligne(45)   
+                self.saut_de_ligne(40)   
 
                 self.pos_X = frame_width/2  #determination en X de la position du Label : ici on centre
-                t_msg = self.canevas.create_text(self.pos_X,self.pos_Y, text = "Annuler ?", fill = color_message, font = size20)
+                t_msg = self.canevas.create_text(self.pos_X,self.pos_Y, text = "/0 pour Annuler...", fill = color_message, font = size20)
+
+                if self is contexte_unique:
+                    choiceFonction()
             else:
                 self.pos_X = frame_width/2  #determination en X de la position du Label : ici on centre
-                t_msg = self.canevas.create_text(self.pos_X, self.pos_Y, text = u"Chargement effectué: " + unicode(montant) + screen.euro , fill = color_header, font = size20)
-                
-                #saut de ligne
-                self.saut_de_ligne()
-
-                self.tk_client(pos_line = self.pos_Y)
+                t_msg = self.canevas.create_text(self.pos_X, self.pos_Y, text = u"Ajout effectué: " + unicode(montant) + screen.euro , fill = color_header, font = size20)
                            
-    def tk_client(self, pos_line = frame_height/2.5) :
-            self.ensure_tkdisplay()
-            # barcode
-            self.pos_X = frame_width/2 
+    def tk_client(self, pos_line = tile_height/2.5) :
             self.pos_Y = pos_line
+            self.ensure_tkdisplay()
+
+            # barcode
+            self.pos_X = tile_width/2 
             t_barcode = self.canevas.create_text(self.pos_X, self.pos_Y, text = self.client.fields['barcode'], fill = color_client, font = size26)
 
-
-            #saut de ligne
             self.saut_de_ligne(40) 
             
             # solde
-            self.pos_X = frame_width*0.5
+            self.pos_X = tile_width/2 
             t_solde = self.canevas.create_text(self.pos_X, self.pos_Y, anchor = 'n',text = self.client.fields["amount"]+screen.euro, fill = color_header, font = size30)
+
+            self.saut_de_ligne(40) 
 
     def tk_produit(self) :
             self.ensure_tkdisplay()
@@ -1779,12 +2025,7 @@ class Contexte (): #threading.Thread
                         
             # prix
             self.pos_X = frame_width/2
-            t_prix = self.canevas.create_text(self.pos_X, self.pos_Y, text = self.produit.fields['price'], fill = color_debit,font = size30)
-
-            # symbole screen.euro
-    ##            self.size(t_prix,"TEXT",1,0 )
-    ##            self.pos_X = t_x/2 + self.sizeX/2 #determination en X de la position du Label : ici on centre
-            self.euro(t_prix,26)
+            t_prix = self.canevas.create_text(self.pos_X, self.pos_Y, text = self.produit.fields['price']+screen.euro, fill = color_debit,font = size30)
                             
     def tk_scanner(self) :
             self.ensure_tkdisplay()
@@ -1840,21 +2081,34 @@ class Contexte (): #threading.Thread
             self.ensure_tkdisplay()
 
             theGrid = Tkinter.Canvas(self.canevas, width = frame_width-2, height = frame_height-62, bg=color_canevas, bd=1)
-            theGrid.place(anchor=Tkinter.N, x=frame_width/2, y = 60)
+            theGrid.place(anchor=Tkinter.N, x=frame_width/2, y = 45)
 
-            name_column = Tkinter.Label(theGrid,text = "TICKET", fg = color_header, bg = color_canevas,font = size22)
-            name_column.grid(row = 0, column = 0,columnspan = 5, pady=4)
-            name_column = Tkinter.Label(theGrid,text = "Num.", fg = color_header, bg = color_canevas,font = size20)
-            name_column.grid(row = 1, column = 0, pady=2,padx=1)
-            name_column = Tkinter.Label(theGrid,text = "Nom", fg = color_header, bg = color_canevas,font = size20)
-            name_column.grid(row = 1, column = 1, pady=2,padx=1)
-            name_column = Tkinter.Label(theGrid,text = "Qte", fg = color_header,bg = color_canevas,font = size20)
-            name_column.grid(row = 1, column = 2, pady=2,padx=1)
-            name_column = Tkinter.Label(theGrid,text = " €/u ", fg = color_header,bg = color_canevas,font = size20)
-            name_column.grid(row = 1, column = 3, pady=2,padx=1)
-            name_column = Tkinter.Label(theGrid,text = " € tot", fg = color_header, bg = color_canevas,font = size20)
-            name_column.grid(row = 1, column = 4, pady=2,padx=1)
-            for i in range(5):
+            if brace_type==0:
+	        name_column = Tkinter.Label(theGrid,text = "TICKET", fg = color_header, bg = color_canevas,font = size22)
+		name_column.grid(row = 0, column = 0,columnspan = 5, pady=4)
+		name_column = Tkinter.Label(theGrid,text = "Num.", fg = color_header, bg = color_canevas,font = size20)
+		name_column.grid(row = 1, column = 0, pady=2,padx=1)
+		name_column = Tkinter.Label(theGrid,text = "Item", fg = color_header, bg = color_canevas,font = size20)
+		name_column.grid(row = 1, column = 1, pady=2,padx=1)
+		name_column = Tkinter.Label(theGrid,text = "Qt.", fg = color_header,bg = color_canevas,font = size20)
+		name_column.grid(row = 1, column = 2, pady=2,padx=1)
+		name_column = Tkinter.Label(theGrid,text = " €/u ", fg = color_header,bg = color_canevas,font = size20)
+		name_column.grid(row = 1, column = 3, pady=2,padx=1)
+		name_column = Tkinter.Label(theGrid,text = " € tot", fg = color_header, bg = color_canevas,font = size20)
+		name_column.grid(row = 1, column = 4, pady=2,padx=1)
+                nbCol = 5
+            
+            
+            elif brace_type == 1:
+		name_column = Tkinter.Label(theGrid,text = "TICKET", fg = color_header, bg = color_canevas,font = size20)
+		name_column.grid(row = 1, column = 0, pady=1,padx=1)
+		name_column = Tkinter.Label(theGrid,text = "Qt", fg = color_header,bg = color_canevas,font = size20)
+		name_column.grid(row = 1, column = 1, pady=1,padx=1)
+		name_column = Tkinter.Label(theGrid,text = " € tot", fg = color_header, bg = color_canevas,font = size20)
+		name_column.grid(row = 1, column = 2, pady=1,padx=1)
+                nbCol = 3
+                       
+            for i in range(nbCol):
                 theGrid.columnconfigure(i,weight=1)
             ligne = 1
             bouteilles = 0
@@ -1864,7 +2118,6 @@ class Contexte (): #threading.Thread
             index = self.debut
             for element in self.prev_panier.keys() [self.debut : self.debut+TAILLE_ECRAN]:
                     ligne += 1
-                    
                     #récupération des infos à partir de la base de données
 
                     #print ("The price of one {} is {} euros \nYou took {} of them" .format(element.fields["name"], element.fields["price"], self.panier[element])) #affichage d'une "Facture"
@@ -1874,30 +2127,51 @@ class Contexte (): #threading.Thread
                     #calcul du total
                     total = (price * float(self.prev_panier[element]))
                                                    
+                    if brace_type == 0:
+		        achat = Tkinter.Label(theGrid,text = unicode(index+1), fg = color_index,bg = color_canevas,font = size14)
+			achat.grid(row = ligne, column = 0, pady=2)
+			achat = Tkinter.Label(theGrid,text = element.fields["name"][:15], fg = color_header,bg = color_canevas,font = size18)
+			achat.grid(row = ligne, column = 1, pady=2)
+			achat = Tkinter.Label(theGrid,text = self.prev_panier[element], fg = color_message,bg = color_canevas,font = size18)
+			bouteilles += self.prev_panier[element]                    
+			achat.grid(row = ligne, column = 2, pady=2)
+			achat = Tkinter.Label(theGrid,text = element.fields["price"], fg = color_message,bg = color_canevas,font = size18)
+			achat.grid(row = ligne, column = 3, pady=2)
+			achat = Tkinter.Label(theGrid,text = total, fg = color_debit,bg = color_canevas,font = size18)
+			achat.grid(row = ligne, column = 4, pady=2)
+			index +=1
+                   
+                    elif brace_type == 1:
+		        achat = Tkinter.Label(theGrid,text = element.fields["name"][:15], fg = color_header,bg = color_canevas,font = size18)
+			achat.grid(row = ligne, column = 0, pady=1)
+			achat = Tkinter.Label(theGrid,text = self.prev_panier[element], fg = color_message,bg = color_canevas,font = size18)
+			bouteilles += self.prev_panier[element]                    
+			achat.grid(row = ligne, column = 1, pady=1)
+			achat = Tkinter.Label(theGrid,text = total, fg = color_debit,bg = color_canevas,font = size18)
+			achat.grid(row = ligne, column = 2, pady=1)
+			index +=1
 
-                    achat = Tkinter.Label(theGrid,text = unicode(index+1), fg = color_index,bg = color_canevas,font = size14)
-                    achat.grid(row = ligne, column = 0, pady=2)
-                    achat = Tkinter.Label(theGrid,text = element.fields["name"][:15], fg = color_header,bg = color_canevas,font = size18)
-                    achat.grid(row = ligne, column = 1, pady=2)
-                    achat = Tkinter.Label(theGrid,text = self.prev_panier[element], fg = color_message,bg = color_canevas,font = size18)
-                    bouteilles += self.prev_panier[element]                    
-                    achat.grid(row = ligne, column = 2, pady=2)
-                    achat = Tkinter.Label(theGrid,text = element.fields["price"], fg = color_message,bg = color_canevas,font = size18)
-                    achat.grid(row = ligne, column = 3, pady=2)
-                    achat = Tkinter.Label(theGrid,text = total, fg = color_debit,bg = color_canevas,font = size18)
-                    achat.grid(row = ligne, column = 4, pady=2)
-                    index +=1
             total,bouteilles = self.total_panier(self.prev_panier)
             ligne += 1
-            cell = Tkinter.Label(theGrid,text = unicode(len(self.prev_panier)), fg = color_index,bg = color_canevas,font = size18)
-            cell.grid(row = ligne, column = 0, pady=2)
-            cell = Tkinter.Label(theGrid,text = "TOTAL", fg = color_message,bg = color_canevas,font = size18)
-            cell.grid(row = ligne, column = 1, pady=2)
-            cell = Tkinter.Label(theGrid,text = unicode(bouteilles), fg = color_message,bg = color_canevas,font = size18)
-            cell.grid(row = ligne, column = 2, pady=2)
-            cell = Tkinter.Label(theGrid,text = unicode(total), fg = color_debit,bg = color_canevas,font = size18)
-            cell.grid(row = ligne, column = 4, pady=2)
-    
+            
+            if brace_type == 0:
+	        cell = Tkinter.Label(theGrid,text = unicode(len(self.prev_panier)), fg = color_index,bg = color_canevas,font = size18)
+	        cell.grid(row = ligne, column = 0, pady=2)
+	    	cell = Tkinter.Label(theGrid,text = "TOTAL", fg = color_message,bg = color_canevas,font = size18)
+		cell.grid(row = ligne, column = 1, pady=2)
+		cell = Tkinter.Label(theGrid,text = unicode(bouteilles), fg = color_message,bg = color_canevas,font = size18)
+		cell.grid(row = ligne, column = 2, pady=2)
+		cell = Tkinter.Label(theGrid,text = unicode(total), fg = color_debit,bg = color_canevas,font = size18)
+		cell.grid(row = ligne, column = 4, pady=2)
+   
+            elif brace_type == 1:
+		cell = Tkinter.Label(theGrid,text = "TOTAL", fg = color_message,bg = color_canevas,font = size18)
+		cell.grid(row = ligne, column = 0, pady=2)
+		cell = Tkinter.Label(theGrid,text = unicode(bouteilles), fg = color_message,bg = color_canevas,font = size18)
+		cell.grid(row = ligne, column = 1, pady=2)
+		cell = Tkinter.Label(theGrid,text = unicode(total), fg = color_debit,bg = color_canevas,font = size18)
+		cell.grid(row = ligne, column = 2, pady=2)
+
     def tk_stock(self,all_stock):
             self.ensure_tkdisplay()
 
@@ -1906,7 +2180,7 @@ class Contexte (): #threading.Thread
 
             if brace_type == 0:
                 name_column = Tkinter.Label(theGrid,text = "PRODUITS", fg = color_header, bg = color_canevas,font = size22)
-                name_column.grid(row = 0, column = 0,columnspan = 6, pady=4)
+                name_column.grid(row = 0, column = 0,columnspan = 5, pady=4)
                 name_column = Tkinter.Label(theGrid,text = "Barcode", fg = color_header, bg = color_canevas,font = size20)
                 name_column.grid(row = 1, column = 1, pady=2,padx=4)
                 name_column = Tkinter.Label(theGrid,text = "Nom", fg = color_header, bg = color_canevas,font = size20)
@@ -1918,13 +2192,13 @@ class Contexte (): #threading.Thread
 
             elif brace_type ==1:
                 name_column = Tkinter.Label(theGrid,text = "PRODUITS", fg = color_header, bg = color_canevas,font = size22)
-                name_column.grid(row = 0, column = 0,columnspan = 6, pady=4)
+                name_column.grid(row = 0, column = 0,columnspan = 3, pady=4)
                 name_column = Tkinter.Label(theGrid,text = "Nom", fg = color_header, bg = color_canevas,font = size20)
-                name_column.grid(row = 1, column = 2, pady=2,padx=4)
+                name_column.grid(row = 1, column = 0, pady=2,padx=4)
                 name_column = Tkinter.Label(theGrid,text = "€/u", fg = color_header,bg = color_canevas,font = size20)
-                name_column.grid(row = 1, column = 3, pady=2,padx=4)
+                name_column.grid(row = 1, column = 1, pady=2,padx=4)
                 name_column = Tkinter.Label(theGrid,text = " Qty ", fg = color_header,bg = color_canevas,font = size20)
-                name_column.grid(row = 1, column = 4, pady=2,padx=4)
+                name_column.grid(row = 1, column = 2, pady=2,padx=4)
             
             print "Votre Stock : "
             ligne = 5
@@ -1950,14 +2224,12 @@ class Contexte (): #threading.Thread
                     produit.grid(row = ligne, column = 4, pady=2,padx=4)
 
                 elif brace_type ==1:
-                    produit = Tkinter.Label(theGrid,text = " ABCDEFGHIJKL"[ligne-5], fg = color_header,bg = color_canevas,font = size20)
-                    produit.grid(row = ligne, column = 0, pady=2,padx=4)
                     produit = Tkinter.Label(theGrid,text = objet.fields['name'][:15], fg = color_header,bg = color_canevas,font = size18)
-                    produit.grid(row = ligne, column = 2, pady=2,padx=4)
+                    produit.grid(row = ligne, column = 0, pady=2,padx=4)
                     produit = Tkinter.Label(theGrid,text = objet.fields["price"], fg = color_debit,bg = color_canevas,font = size18)
-                    produit.grid(row = ligne, column = 3, pady=2,padx=4)
+                    produit.grid(row = ligne, column = 1, pady=2,padx=4)
                     produit = Tkinter.Label(theGrid,text = objet.fields["qty"], fg = color_message,bg = color_canevas,font = size18)
-                    produit.grid(row = ligne, column = 4, pady=2,padx=4)
+                    produit.grid(row = ligne, column = 2, pady=2,padx=4)
 
                     
     def tk_collaborateurs(self,all_collabs):
@@ -1966,15 +2238,23 @@ class Contexte (): #threading.Thread
             theGrid = Tkinter.Canvas(self.canevas, width = frame_width-2, height = frame_height-62, bg=color_canevas, bd=1)
             theGrid.place(anchor=Tkinter.N, x=frame_width/2, y = 60)
 
-            name_column = Tkinter.Label(theGrid,text = "COLLABS", fg = color_header, bg = color_canevas,font = size22)
-            name_column.grid(row = 0, column = 0,columnspan = 5, pady=4)
-            name_column = Tkinter.Label(theGrid,text = "Barcode", fg = color_header, bg = color_canevas,font = size20)
-            name_column.grid(row = 1, column = 1, pady=2,padx=4)
-            name_column = Tkinter.Label(theGrid,text = "Nom", fg = color_header, bg = color_canevas,font = size20)
-            name_column.grid(row = 1, column = 2, pady=2,padx=4)
-            name_column = Tkinter.Label(theGrid,text = "Accès", fg = color_header,bg = color_canevas,font = size20)
-            name_column.grid(row = 1, column = 3, pady=2,padx=4)
-      
+            if brace_type == 0:
+	            name_column = Tkinter.Label(theGrid,text = "COLLABS", fg = color_header, bg = color_canevas,font = size22)
+	            name_column.grid(row = 0, column = 0,columnspan = 4, pady=4)
+	            name_column = Tkinter.Label(theGrid,text = "Barcode", fg = color_header, bg = color_canevas,font = size20)
+	            name_column.grid(row = 1, column = 1, pady=2,padx=4)
+	            name_column = Tkinter.Label(theGrid,text = "Nom", fg = color_header, bg = color_canevas,font = size20)
+	            name_column.grid(row = 1, column = 2, pady=2,padx=4)
+	            name_column = Tkinter.Label(theGrid,text = "Accès", fg = color_header,bg = color_canevas,font = size20)
+	            name_column.grid(row = 1, column = 3, pady=2,padx=4)
+            elif brace_type == 1:
+	            name_column = Tkinter.Label(theGrid,text = "Bracelet", fg = color_header, bg = color_canevas,font = size20)
+	            name_column.grid(row = 1, column = 0, pady=1,padx=2)
+	            name_column = Tkinter.Label(theGrid,text = "COLLAB", fg = color_header, bg = color_canevas,font = size20)
+	            name_column.grid(row = 1, column = 1, pady=1,padx=2)
+	            name_column = Tkinter.Label(theGrid,text = "Accès", fg = color_header,bg = color_canevas,font = size20)
+	            name_column.grid(row = 1, column = 2, pady=1,padx=2)
+     
             print "Vos collaborateurs : "
             ligne = 5
             if all_collabs :
@@ -1997,14 +2277,12 @@ class Contexte (): #threading.Thread
 					produit.grid(row = ligne, column = 3, pady=2,padx=4)
 					
                 elif brace_type == 1:
-					produit = Tkinter.Label(theGrid,text = " ABCDEFGHIJKL"[ligne-5], fg = color_header,bg = color_canevas,font = size20)
-					produit.grid(row = ligne, column = 0, pady=2,padx=4)
 					produit = Tkinter.Label(theGrid,text = objet.fields['barcode'], fg = color_product,bg = color_canevas,font = size16)
-					produit.grid(row = ligne, column = 1, pady=2,padx=4)
+					produit.grid(row = ligne, column = 0, pady=1,padx=2)
 					produit = Tkinter.Label(theGrid,text = objet.fields['name'][:15], fg = color_header,bg = color_canevas,font = size18)
-					produit.grid(row = ligne, column = 2, pady=2,padx=4)
+					produit.grid(row = ligne, column = 1, pady=1,padx=2)
 					produit = Tkinter.Label(theGrid,text = objet.fields["access"], fg = color_debit,bg = color_canevas,font = size18)
-					produit.grid(row = ligne, column = 3, pady=2,padx=4)
+					produit.grid(row = ligne, column = 2, pady=1,padx=2)
 					
     def tk_scanners(self,all_scans):
             self.ensure_tkdisplay()
@@ -2259,6 +2537,8 @@ class Contexte (): #threading.Thread
 
     def command_interpreter(self,res):
 
+	global contexte_unique
+
         try :
             if (self.user != None) :
                 #determination du mode
@@ -2266,7 +2546,7 @@ class Contexte (): #threading.Thread
                     if res in modes :                    # il faudra tester si l'utilisateur peut accéder à ce mode
                         
                         if res == CB_User_Cancel :
-                            self.reinit(None)
+                            self.reinit(None,None)
                             ecran_message(self,0,u"!Veuillez vous identifier")
                         else:
                             if res == CB_Vente_Bracelets:
@@ -2275,44 +2555,59 @@ class Contexte (): #threading.Thread
                                     ecran_message(self,0,u"!Nouveau bracelet: ",u"Choisir le montant",u"à ajouter sur le bracelet.", u"Par défaut : "+unicode(barbaraConfiguration.defaultAmount)+" euros",u" ",\
                                                    u"!Bracelet déjà vendu: ",u"Recharge,",u"Solde", u"ou Remboursement")
                                     self.pref_qty = u"€ "
-                                    self.pref_nom = u""
+                                    self.pref_nom = u"à ajouter"
+				else:
+                                    self.reinit(self.user, None)
                             elif res == CB_Vente_Produits:
                                 if self.user.allowed('c'):
                                     self.reinit(self.user, res)                    
-                                    ecran_message(self,0,u"Scanner les ventes",u"puis le bracelet",u"du client")
+                                    ecran_message(self,0,u"Entrer les ventes",u"puis scanner",u"le bracelet",u"du client")
                                     self.pref_qty = u"Qte="
                                     self.pref_nom = u""
+				else:
+                                    self.reinit(self.user, None)
                             elif res == CB_Stock:
                                 if self.user.allowed('g'):
                                     self.reinit(self.user, res)                    
                                     ecran_message(self,0,u"!Produits",u"!et Services",u"!disponibles")
                                     self.pref_qty = u"Cents="
                                     self.pref_nom = u"Nom:"
+				else:
+                                    self.reinit(self.user, None)
                             elif res == CB_Collabs:
                                 if self.user.allowed('g'):
                                     self.reinit(self.user, res)                    
                                     ecran_message(self,0,u"!Collaborateurs",u"et privilèges")
                                     self.pref_qty = u"Priv."
                                     self.pref_nom = u"Nom:"
+				else:
+                                    self.reinit(self.user, None)
                             elif res == CB_Gestion:
                                 if self.user.allowed('g'):
                                     self.reinit(self.user, res)                    
-                                    ecran_message(self,0,u"!Commandes de configuration...",u"IP="+localAddr,u"Batt.="+unicode(lastBatt)+u"V")
+                                    ecran_message(self,0,u"!Système...",u"IP="+localAddr,u"Batt.="+unicode(lastBatt)+u"V")
                                     self.pref_qty = u""
                                     self.pref_nom = u""
+				else:
+                                    self.reinit(self.user, None)
                             elif res == CB_Scanners:
                                 if self.user.allowed('g'):
                                     self.reinit(self.user, res)                    
                                     ecran_message(self,0,u"!Scanners environnants")
                                     self.pref_qty = u"akuino#"
                                     self.pref_nom = u"Nom:"
+				else:
+                                    self.reinit(self.user, None)
+
+		        if self is contexte_unique:
+		            beginLeftMenu(self.mode)
 
                         return True
                     elif res in actions :
                         action = res
                         if (action == CB_Arbitraire):
                             self.arbitraire = True
-                            ecran_message(self,0,u"Veuillez scanner le",u"!code-barre",u"!à utiliser")
+                            ecran_message(self,0,u"Veuillez scanner le",u"!bracelet",u"!à utiliser")
                         elif (action == CB_Modifier):
                             if self.mode == CB_Gestion:
                                 if not self.nom_choisi or (len(self.nom_choisi) != 11) or not self.nom_choisi[:6].isnumeric() or not self.nom_choisi[7:].isnumeric():
@@ -2396,7 +2691,10 @@ class Contexte (): #threading.Thread
                         elif action == CB_Precedent:
                             self.debut -=  TAILLE_ECRAN
                             if self.mode == CB_Vente_Produits:
-                                ecran_facture(self)
+                                if brace_type == 0:
+				    ecran_facture(self)
+                                elif brace_type == 1:
+				    self.syncListe(c.AllProducts.elements_refreshed())                
                             elif self.mode == CB_Stock:
                                 ecran_stock(self,True)
                             elif self.mode == CB_Collabs:
@@ -2406,7 +2704,10 @@ class Contexte (): #threading.Thread
                         elif action == CB_Suivant :
                             self.debut +=  TAILLE_ECRAN
                             if self.mode == CB_Vente_Produits:
-                                ecran_facture(self)
+                                if brace_type == 0:
+				    ecran_facture(self)
+                                elif brace_type == 1:
+				    self.syncListe(c.AllProducts.elements_refreshed())                
                             elif self.mode == CB_Stock:
                                 ecran_stock(self,True)
                             elif self.mode == CB_Collabs:
@@ -2486,6 +2787,26 @@ class Contexte (): #threading.Thread
                                     self.nom_choisi = self.scanner.fields["name"]
                                     self.setQty(self.scanner.fields["client"])
                                     ecran_scanner(self)
+                            elif self.mode == CB_Vente_Produits:
+                                if contexte_unique.menu == contexte_unique.ListeButton:
+                                    self.produit = self.syncChoix(aChoice,c.AllProducts.elements)
+                                    if self.produit:
+                                        if self.modifier:
+                                            self.retirer_produit()                    
+                                        else:
+                                            self.ajouter_produit()
+                                        ecran_vente_produits(self)
+                                elif contexte_unique.menu == contexte_unique.TicketButton:
+                                    self.produit = self.syncChoixTicket(aChoice,self.prev_panier)
+                                    if self.produit:
+                                        if self.modifier:
+                                            self.retirer_produit()
+                 			    ecran_facture(self)
+                                            choiceTicket()
+                                        else:
+                                            self.ajouter_produit()
+                 			    ecran_facture(self)
+                                            choiceTicket()
                             return True
         except :
             traceback.print_exc()
@@ -2556,6 +2877,12 @@ class Contexte (): #threading.Thread
                     ecran_utilisateur(self)
                     return
                 else:
+                    if unicode(currObject.id) == CB_User_BARBARA: # PIN requested
+			if self.qty_choisie != barbaraConfiguration.omniPIN:
+			    self.reinit(None,None)
+                            ecran_message(self,0,u"Accès interdit")
+                            return                
+
                     #determination de l'utilisateur
                     for local_rank in allContexte:
                         aContext = allContexte[local_rank]
@@ -2570,16 +2897,17 @@ class Contexte (): #threading.Thread
                     acc = currObject.access()
                     if acc == 'g':
                         ecran_message(self,0,u"Veuillez choisir: ","!Vente Bracelets,","!Vente Produits,","!ou Gestion")
-                    elif acc == 'a' or acc == 'g':
+                        choicePrincipal()
+                    elif acc == 'a':
                         ecran_message(self,0,u"Veuillez choisir: ","!Vente Bracelets,","!ou Vente Produits")
+                        choicePrincipal()
                     elif acc == 'b':
                         self.command_interpreter(CB_Vente_Bracelets)
                     elif acc == 'c':
                         self.command_interpreter(CB_Vente_Produits)
                     else:
                         ecran_message(self,0,u"Accès interdit")
-                    return
-                
+                    return                
 
             if (self.user == None) :
                 ecran_message(self,0,u"!Veuillez vous identifier")
@@ -2723,10 +3051,11 @@ def insureContext(aScannerKey):
         if rank < MAX_TILES:
             allContexte[rank] = Contexte(rank, aScannerKey)
             contextRank = rank
+	    allContexte[contextRank].inputQueue.put(CB_User_Cancel)
             rank += 1
             return allContexte[contextRank]
         else:
-            print(aScannerKey+" TOO MANY SCANNERS: 6 is the maximum")
+            print(unicode(aScannerKey)+u" TOO MANY SCANNERS: "+unicode(MAX_TILES)+u" is the maximum")
             return None
     else:
         return None
@@ -2734,13 +3063,67 @@ def insureContext(aScannerKey):
 if brace_type == 0:    
     threadBlueTooth,threadBluetoothEnQueue = bluetooth.start()
 
+
+# classe qui lance un thread de gestion du code barre par appareil, cette fonction se charge aussi de mettre les codes barres receuillis dans une queue
+class SerialInputThread(threading.Thread):
+
+    def __init__(self,currentScanner):
+        threading.Thread.__init__(self)
+        self.currScanner = currentScanner
+        self.Alive = False
+        self.dev = None
+        try:
+            self.dev = serial.Serial(currentScanner.fields[u'name'],9600,timeout=0.1)
+        except:
+            traceback.print_exc()
+        time.sleep(0.1)
+        
+    def run(self):
+        self.Alive = self.dev != None
+	line = ""
+        time.sleep(0.01)
+                
+        global Alive
+
+        while Alive and self.Alive:
+           try:
+		data = self.dev.read()
+		if data:
+		    if data < ' ':
+                        if not Alive:
+                            break
+                        elif not self.Alive:
+                            break
+                        elif line:
+                            local_rank = -1
+                            for contextRank in range(MAX_TILES):
+                                if allContexte[contextRank] and allContexte[contextRank].currScanner and allContexte[contextRank].currScanner == self.currScanner:
+                                    local_rank = contextRank
+                                    break
+                            if local_rank >= 0:
+                                print("\n " + unicode(local_rank) + ":  " + line)
+                                contexte = allContexte[local_rank]
+                                contexte.inputQueue.put(line)
+                            line = ""
+                    else:
+			line += data
+                    
+           except:
+               traceback.print_exc()
+           time.sleep(0.001)
+        if self.dev:
+            self.dev.close()
+        self.Alive = False
+
+threadSerial = None
+
 # classe qui lance un thread de gestion du code barre par appareil, cette fonction se charge aussi de mettre les codes barres receuillis dans une queue
 class InputEventThread(threading.Thread):
 
     def __init__(self,currentScanner):
         threading.Thread.__init__(self)
         self.currScanner = currentScanner
-        #self.dev = evdev.InputDevice("/dev/input/event"+unicode(self.currScanner.numDev))
+        self.dev = evdev.InputDevice("/dev/input/event"+unicode(self.currScanner.numDev))
         self.Alive = False
         
     def run(self):
@@ -2774,10 +3157,11 @@ class InputEventThread(threading.Thread):
                         break
                     if event.type == evdev.ecodes.EV_KEY:
                         data = evdev.categorize(event)
+			print data.scancode
                         if data.scancode == 42:
                             caps = not data.keystate == 0
                         elif data.keystate == 1:
-                            if data.scancode == 28:
+                            if data.scancode == 28 or data.scancode == 96:
                                 local_rank = -1
                                 for contextRank in range(MAX_TILES):
                                     if allContexte[contextRank] and allContexte[contextRank].currScanner and allContexte[contextRank].currScanner == self.currScanner:
@@ -2798,7 +3182,7 @@ class InputEventThread(threading.Thread):
                                     else:
                                         res += scancodes[int(data.scancode)]
                                 except:
-                                    print("Invelid key:",data.scancode)
+                                    print("Invalid key:"+unicode(data.scancode))
                                     
                     #else:
                        # print event               
@@ -2842,6 +3226,8 @@ def InputListThread():
     global bluetoothScanner
 
     global screen_type
+
+    global threadSerial
     
     #if screen_type !=0:
         
@@ -2861,17 +3247,24 @@ def InputListThread():
             activeSet = []
             screen.devConnected = ""
             for inputLine in fInputDevices:
-                if inputLine[:8] == 'U: Uniq=':
-                    physical = inputLine[8:].strip()
+                if inputLine[:2] == 'I:':
+                    physical = None
+                elif inputLine[:8] == 'N: Name=':
+                    physical = inputLine[8:].strip('" \r\n')
+                elif inputLine[:8] == 'U: Uniq=':
+                    unique = inputLine[8:].strip('" \r\n')
+                    if unique:
+                        physical = unique
                 elif inputLine[:12] == 'H: Handlers=':
-                    for capab in inputLine[12:].strip().split(' '):
-                        if (capab[:5] == 'sysrq') and (physical==""):
-                            physical='AFANDBARCODE'
+		    for capab in inputLine[12:].strip('" \r\n').split(' '):
+                        #if (capab[:5] == 'sysrq') and (physical==""):
+                        #    physical=MAC_USB_Scanner
                         if capab[:5] == 'event':
                             numDev = int(capab[5:])
                             if physical:
                                 key = c.AllScanners.makeKey(physical)
                                 if key in c.AllScanners.elements:
+	                            #print unicode(numDev)+"="+physical
                                     currScanner = c.AllScanners.elements[key]                                
                                     if currScanner.isActive(): #not denied
                                         currScanner.numDev = numDev
@@ -2888,7 +3281,9 @@ def InputListThread():
                                                 currScanner.reader = InputEventThread(currScanner)
                                             else:
                                                 continue # Thread still alive
-                                            #currScanner.reader.start()
+                                            currScanner.reader.daemon = True
+                                            currScanner.reader.start()
+                                            print unicode(currScanner.numDev)+"<="+unicode(key)
 
                                             if hardConf.oled:
                                                 if not somethingDisplayed:
@@ -2903,12 +3298,30 @@ def InputListThread():
                                                 screen.linePos += screen.lineHeight
                                                 screen.draw.text((screen.begScreen,screen.linePos+1), "            "+currScanner.id, font=screen.font,fill=255)
                                                 screen.linePos += screen.lineHeight
-                                    physical = None
+                                physical = None
 
             for key in c.AllScanners.elements:
                 currScanner = c.AllScanners.elements[key]
                 if key in activeSet:
                     pass
+                elif currScanner.fields[u"client"] == "serial":
+                    if not threadSerial:
+                        currScanner.numDev = numDev
+                        currScanner.paired = True
+                        currScanner.connected = True
+                        key = currScanner.id
+                        threadContext = insureContext(key)
+                        if threadContext:
+                            activeSet.append(key)
+                            screen.devConnected += unicode(threadContext.rank)
+                            if currScanner.reader is None :
+                                currScanner.reader = SerialInputThread(currScanner)
+                                currScanner.reader.daemon = True
+                                currScanner.reader.start()
+                            elif (not currScanner.reader.is_alive()) or (not currScanner.reader.Alive):
+                                currScanner.reader = SerialInputThread(currScanner)
+                                currScanner.reader.daemon = True
+                                currScanner.reader.start()
                 else:
                     if currScanner.reader:
                         currScanner.reader.Alive = False
@@ -3142,7 +3555,7 @@ def configPanel(event):
 
 def execThreads():
 
-    global Alive
+    global Alive, contexte_unique
     
     time.sleep(0.01)
     for local_rank in allContexte:
@@ -3157,14 +3570,13 @@ def execThreads():
         tkdisplay_root.destroy()
 
 try:
-    entree = Tkinter.Entry(tkdisplay_root)
-    entree.bind("<Return>", configPanel)
-    entree.focus_set()
-    entree.place()
+#    entree = Tkinter.Entry(tkdisplay_root)
+#    entree.bind("<Return>", configPanel)
+#    entree.focus_set()
+#    entree.place()
 
     if hardConf.running:
         PIG.write(hardConf.running, 1)
-    #execThreads()
     tkdisplay_root.after(100, execThreads )
     tkdisplay_root.mainloop()
 
@@ -3179,6 +3591,7 @@ threadList.join()
 time.sleep(0.5)
 #if hardConf.running:
 #    PIG.write(hardConf.running, 0)
-PIG.stop()
+if hardConf.running:
+    PIG.stop()
 
 # COMMANDE DE lANCEMENT DU PROGRAMME : sudo xinit ~/Desktop/mypython.sh

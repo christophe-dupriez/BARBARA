@@ -42,12 +42,13 @@ class barbaraConfig():
         self.lf=None
         self.esc=None
         self.braceType=0
-        self.braceMin=990000000000
+	self.braceMin=990000000000
         self.braceMax=999999999999
         self.braceTitle = 'BARBARA'
         self.screenType=0
         self.language = "FR"
         self.defaultAmount = 20.0
+        self.omniPIN = 8448
 
     def load(self):
         global APPdirectory
@@ -146,6 +147,14 @@ class barbaraConfig():
                                     self.braceType=1
                                 else:
                                     self.braceType=0
+                            elif key == u'omni':
+                                try:
+                                    self.omniPIN = int(anItem[1])
+                                    if self.omniPIN <= 0:
+                                        syslog.syslog(syslog.LOG_ERR, u"Le PIN de l'utilisateur BARBARA doit être nombre supérieur à zéro   omni="+anItem[1])
+                                        self.omniPIN =8448
+                                except:
+                                    syslog.syslog(syslog.LOG_ERR, u"Le PIN de l'utilisateur BARBARA doit être nombre supérieur à zéro   omni="+anItem[1])
                 
                 if u'screen' in aConfig.sections():
                       for anItem in aConfig.items(u'screen'):

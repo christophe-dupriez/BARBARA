@@ -532,7 +532,10 @@ class AllTransactions(AllObjects):
                     barkey = row[u"product"]
                     if barkey:
                         if qty > 0.0:
-                            aProduct = self.config.AllProducts.assignObject(barkey, { u"barcode":barkey,"name":"product#"+barkey,"price":unicode(amount/qty),"qty":"" } )
+                            if barkey in self.config.AllProducts.elements:
+				aProduct =  self.config.AllProducts.elements[barkey]
+                            else:
+                                aProduct = self.config.AllProducts.assignObject(barkey, { u"barcode":barkey,"name":"product#"+barkey,"price":unicode(amount/qty),"qty":"" } )
 
                     if row[u"type"] == u"C": #Credit or Debit of a Brace
                         if aBrace:
@@ -959,7 +962,7 @@ class Scanner(ConfigurationObject):
 ##        if denial:
 ##            denial = denial[0].lower()
 ##        return not (denial and (denial in ['o','y','+','1','2','3','4','5','6','7','8','9']) )
-        return client and client == c.barbaraConfig.akuinoHost
+        return client and (client == "global" or client == "serial" or client == c.barbaraConfig.akuinoHost)
 
     def strActive(self):
         if self.isActive():
