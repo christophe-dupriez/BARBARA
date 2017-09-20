@@ -3101,6 +3101,8 @@ class SerialInputThread(threading.Thread):
                                     local_rank = contextRank
                                     break
                             if local_rank >= 0:
+                                if len(line) == 12:  # Serial data in HEX with checksum
+                                    line = unicode(int(line[:10],16))
                                 print("\n " + unicode(local_rank) + ":  " + line)
                                 contexte = allContexte[local_rank]
                                 contexte.inputQueue.put(line)
