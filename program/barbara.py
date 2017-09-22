@@ -3101,9 +3101,10 @@ class SerialInputThread(threading.Thread):
                                     local_rank = contextRank
                                     break
                             if local_rank >= 0:
-                                if len(line) == 12:  # Serial data in HEX with checksum
-                                    line = unicode(int(line[:10],16))
-                                print("\n " + unicode(local_rank) + ":  " + line)
+                                if len(line) == 12:  # Serial data in HEX with checksum to decimal right aligned in 10 columns
+                                    line = u"0000000000"+unicode(int(line[2:10],16))
+                                    line = line[len(line)-10:]
+                                print("\n " + unicode(local_rank) + ": " + line)
                                 contexte = allContexte[local_rank]
                                 contexte.inputQueue.put(line)
                             line = ""
@@ -3306,7 +3307,7 @@ def InputListThread():
                 currScanner = c.AllScanners.elements[key]
                 if key in activeSet:
                     pass
-                elif currScanner.fields[u"client"] == "serial":
+                elif currScanner.isActive() and (key.startswith("SERIAL")):
                     if not threadSerial:
                         currScanner.numDev = numDev
                         currScanner.paired = True

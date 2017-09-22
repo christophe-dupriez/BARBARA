@@ -953,16 +953,10 @@ class Scanner(ConfigurationObject):
 
         client = self.fields[u"client"]
 
-        if self.id == "AFANDBARCODE":
-            if client and (len(client) > 1):
-                client = c.barbaraConfig.akuinoHost
-                self.fields[u'client'] = client
-
-
 ##        if denial:
 ##            denial = denial[0].lower()
 ##        return not (denial and (denial in ['o','y','+','1','2','3','4','5','6','7','8','9']) )
-        return client and (client == "global" or client == "serial" or client == c.barbaraConfig.akuinoHost)
+        return client and client == c.barbaraConfig.akuinoHost
 
     def strActive(self):
         if self.isActive():
