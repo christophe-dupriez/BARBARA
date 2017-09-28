@@ -35,7 +35,7 @@ from PIL import ImageFont
 #from keypadClass4 import keypad
 
 # For ADC:
-#from smbus import SMBus
+from smbus import SMBus
 #import spidev
 
 #Impression de barcodes = pas nécessaire car généré par l'imprimante...
@@ -1075,10 +1075,26 @@ def adaptText(lines, aLine):
     else:
         return u"\n" + aLine + u"\n"
 
-while not scannersLoaded:
-    print "Waiting for Central server"
-    time.sleep(2)
+tkdisplay_root.geometry(unicode(screen_width)+"x"+unicode(screen_height))
+tkdisplay_root.minsize(width=screen_width,height=screen_height)
+tkdisplay_root.resizable(width=False,height=False)
+print "Screen : "+ unicode(screen_width) + "x" + unicode(screen_height)
 
+logo_frame = None
+if not scannersLoaded:        
+	logo = Tkinter.PhotoImage(file = baseDirIMG+"AKUINO.gif")
+	logo_frame = Tkinter.Canvas(tkdisplay_root, background = color_stat, height = logo.height(), width = logo.width())
+	draw_logo = logo_frame.create_image(1,1,image = logo,anchor=Tkinter.NW,state=Tkinter.NORMAL)
+	i = 2
+	while not scannersLoaded:
+	    logo_frame.place(anchor=Tkinter.CENTER,x=screen_width/i, y=screen_height/i)  
+	    tkdisplay_root.update()
+	    time.sleep(2)
+	    i += 1
+            if i > 4:
+                i = 1
+if logo_frame:
+    logo_frame.destroy()
 
 screen_type=barbaraConfiguration.screenType
 brace_type = barbaraConfiguration.braceType 
@@ -1106,12 +1122,8 @@ else:
     tile_height = net_screen_height
     tile_width = int(screen_width / 2)   
     
-tkdisplay_root.geometry(unicode(screen_width)+"x"+unicode(screen_height))
-tkdisplay_root.minsize(width=screen_width,height=screen_height)
-tkdisplay_root.resizable(width=False,height=False)
 frame_height = tile_height - 14
 frame_width = tile_width - 4 - 8
-print "Screen : "+ unicode(screen_width) + "x" + unicode(screen_height)
 
 if screen_type==0:
     logo = Tkinter.PhotoImage(file = baseDirIMG+"AKUINO.gif")
@@ -1138,8 +1150,8 @@ liste_barcode=[1000000012019,1000000012026,1000000012033,1000000012040,100000001
 fonction_vente_bracelets=[u"Nouveau Bracelet",u"Paiement CASH", u"Paiement CB"]
 fonction_vente_bracelets_barcode=[1000000010107,1000000010015,1000000010022]
 
-fonction_vente_produits=[u"Retirer Produits"]
-fonction_vente_produits_barcode=[1000000010046]
+fonction_vente_produits=[u"Retirer Consom.s",u"Ajouter Consom.s",u"ANNULER"]
+fonction_vente_produits_barcode=[1000000010046,1000000010022,1000000010053]
 
 fonction_utilisateurs=[u"Nouvel utilisateur",u"Désactiver Utilisateur",u"OK Vente Bracelets",u"OK Vente Produits",u"OK Gestion",u"Annuler Droits",u"Sauvegarder"]
 fonction_utilisateurs_barcode=[1000000010107,1000000010046,1000000000016,1000000000207,1000000009002,1000000011098,1000000010015]
@@ -1328,7 +1340,7 @@ def Liste():
     contexte_unique.menu = contexte_unique.ListeButton #.set("liste")
     chiffre=0
     if (contexte_unique.mode == CB_Vente_Produits or contexte_unique.mode == CB_Stock):
-        refset = c.AllProducts.elements.keys()[contexte_unique.debut : contexte_unique.debut+TAILLE_ECRAN]
+        refset = c.AllProducts.elements_refreshed().keys()[contexte_unique.debut : contexte_unique.debut+TAILLE_ECRAN]
         bestFont = chooseFont(len(refset))
         produit={}
         for key in refset:
@@ -1338,7 +1350,7 @@ def Liste():
             Tkinter.Button(contexte_unique.LeftMenu,text=adaptText(len(refset),texte),bg=color_liste,fg=color_texte,font=size17,anchor=Tkinter.W,command=lambda key=key: touchListe(produit[key]+1)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
             chiffre+=1
     elif(contexte_unique.mode == CB_Collabs):
-        refset = c.AllUsers.elements.keys()[contexte_unique.debut : contexte_unique.debut+TAILLE_ECRAN]
+        refset = c.AllUsers.elements_refreshed().keys()[contexte_unique.debut : contexte_unique.debut+TAILLE_ECRAN]
         bestFont = chooseFont(len(refset))
         user={}
         for key in refset:
@@ -1348,7 +1360,7 @@ def Liste():
             Tkinter.Button(contexte_unique.LeftMenu,text=adaptText(len(refset),texte),bg=color_liste,fg=color_texte,font=size19,anchor=Tkinter.W,command=lambda key=key: touchListe(user[key]+1)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
             chiffre+=1
     elif (contexte_unique.mode == CB_Scanners):
-        refset = c.AllScanners.elements.keys()[contexte_unique.debut : contexte_unique.debut+TAILLE_ECRAN]
+        refset = c.AllScanners.elements_refreshed().keys()[contexte_unique.debut : contexte_unique.debut+TAILLE_ECRAN]
         bestFont = chooseFont(len(refset))
         scan={}
         for key in refset:
@@ -2553,7 +2565,7 @@ class Contexte (): #threading.Thread
                                 if self.user.allowed('b'):
                                     self.reinit(self.user, res)                    
                                     ecran_message(self,0,u"!Nouveau bracelet: ",u"Choisir le montant",u"à ajouter sur le bracelet.", u"Par défaut : "+unicode(barbaraConfiguration.defaultAmount)+" euros",u" ",\
-                                                   u"!Bracelet déjà vendu: ",u"Recharge,",u"Solde", u"ou Remboursement")
+                                                   u"!Bracelet déjà vendu: ",u"Recharge,",u"ou Solde")
                                     self.pref_qty = u"€ "
                                     self.pref_nom = u"à ajouter"
 				else:
@@ -2763,6 +2775,9 @@ class Contexte (): #threading.Thread
                                 else:
                                     ecran_message(self,0,u"Modif.Scanner annulée")
                                     self.partial_init()
+                            elif self.mode == CB_Vente_Produits:
+                                print "Ajouter des consommations"
+                                self.modifier = False
                         elif (action == CB_Shutdown):
                             if self.mode == CB_Gestion:
                                 SHUT_NOW(self)
@@ -3063,6 +3078,11 @@ def insureContext(aScannerKey):
 if brace_type == 0:    
     threadBlueTooth,threadBluetoothEnQueue = bluetooth.start()
 
+def beep():
+    if hardConf.picoUPS:
+	    bus_pi = SMBus(hardConf.i2c_bus)
+	    bus_pi.write_word_data(hardConf.pico_address,0x0E,hardConf.pico_beep)
+	    bus_pi.write_byte_data(hardConf.pico_address,0x10,hardConf.pico_duration)
 
 # classe qui lance un thread de gestion du code barre par appareil, cette fonction se charge aussi de mettre les codes barres receuillis dans une queue
 class SerialInputThread(threading.Thread):
@@ -3095,6 +3115,7 @@ class SerialInputThread(threading.Thread):
                         elif not self.Alive:
                             break
                         elif line:
+                            beep()
                             local_rank = -1
                             for contextRank in range(MAX_TILES):
                                 if allContexte[contextRank] and allContexte[contextRank].currScanner and allContexte[contextRank].currScanner == self.currScanner:

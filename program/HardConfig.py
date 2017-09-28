@@ -18,6 +18,11 @@ class HardConfig():
     i2c_bus = 1
     spi_channel = 0
     pcb = None
+    picoUPS = None
+    pico_address = 0x6B
+    pico_beep = 1800
+    pico_duration = 40
+    video = None
     ela = None
     ela_bauds = 9600
     ela_reset = '[9C5E01]'
@@ -94,6 +99,8 @@ class HardConfig():
                                 self.pcb = None
                             elif self.pcb.lower().startswith(u'no'):
                                 self.pcb = None
+                            elif self.pcb.lower().startswith(u'pico'):
+				self.picoUPS = '1'
                             elif self.pcb.startswith(u'0'):
                                 self.oled_reset = 5
                                 self.pcb = '0'
@@ -154,6 +161,9 @@ class HardConfig():
                                 self.oled = None
                             elif self.oled.lower().startswith(u'no'):
                                 self.oled = None
+                            elif self.oled.lower().startswith(u'touch'):
+                                self.oled = None
+				self.touch = '1'
                         
                         elif anItem[0].lower() ==  u'i2c':
                             try:
