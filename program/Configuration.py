@@ -36,6 +36,7 @@ def infloat(nbre):
 def digest(aString):
     return ("0000"+unicode(abs(zlib.crc32(aString))))[-4:]
 
+web.config.debug = False
 render = web.template.render('templates/',base='layout')
 
 class auto_application_port(web.auto_application):
