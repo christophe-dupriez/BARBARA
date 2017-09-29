@@ -337,6 +337,8 @@ class ConfigurationObject(object):
         aBarcode.save('/run/akuino/'+unicode(self.id))
         return '/static/run/akuino/'+unicode(self.id)+'.png'
 
+deltaRefresh = datetime.timedelta(minutes=2)
+
 class AllObjects(object):
 
     def __init__(self,config):
@@ -346,6 +348,7 @@ class AllObjects(object):
         self.config = config
         self.keyColumn = u"barcode"
         self.elements = {}
+	self.lastReq = datetime.datetime(1900,1,1) # long time ago!
 
     def ensure_fileReader(self): # returns a file and a reader if OK, None if error
         try: #si le fichier existe
@@ -428,13 +431,15 @@ class AllObjects(object):
         return currObject
         
     def elements_refreshed(self):
-        if not self.local:
+        nowTime = datetime.datetime.now()
+        if not self.local and nowTime > self.lastReq:
             response = requests.get(self.config.barbaraConfig.applicationURL+u'/'+self.ids+u'/list')
 
             if response.status_code == 200:
                 try:
                     data = response.json()
                     if data:
+			self.lastReq = nowTime + deltaRefresh
                         for barkey in data:
                             self.assignObject(barkey,None)
                             self.refresh(barkey)
