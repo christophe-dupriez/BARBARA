@@ -76,7 +76,7 @@ Alive = True
 def exec_command(contexte,args):
     outputText = None
     try:
-        outputText = subprocess.check_output(args,stderr=subprocess.STDOUT).decode(sys.getdefaultencoding())
+        outputText = subprocess.check_output(args,stderr=subprocess.STDOUT).decode('UTF-8') #sys.getdefaultencoding()
     except subprocess.CalledProcessError as anError:
         contexte.message = [u"Statut="+unicode(anError.returncode),unicode(anError)]
         contexte.tk_message()
@@ -110,7 +110,7 @@ def correctClock(remoteTime):
             remote = datetime.datetime.strptime(remoteTime,COMPACT_TIME_FORMAT)
             if abs(remote - datetime.datetime.now()) > barbaraConfiguration.networkLatency:
                 print u"Setting clock to "+unicode(remote)
-                outputText = subprocess.check_output([u'sudo',u'date',u'+"'+COMPACT_TIME_FORMAT+u'"','-s',u'"'+remoteTime+u'"'],stderr=subprocess.STDOUT).decode(sys.getdefaultencoding())
+                outputText = subprocess.check_output([u'sudo',u'date',u'+"'+COMPACT_TIME_FORMAT+u'"','-s',u'"'+remoteTime+u'"'],stderr=subprocess.STDOUT).decode('UTF-8') #sys.getdefaultencoding()
         except:
             traceback.print_exc()
 
