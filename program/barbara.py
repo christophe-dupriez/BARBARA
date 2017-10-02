@@ -2109,20 +2109,20 @@ class Contexte (): #threading.Thread
 		name_column = Tkinter.Label(theGrid,text = " € tot", fg = color_header, bg = color_canevas,font = size20)
 		name_column.grid(row = 1, column = 4, pady=2,padx=1)
                 nbCol = 5
-            
+                ligne = 1
             
             elif brace_type == 1:
 		name_column = Tkinter.Label(theGrid,text = "TICKET", fg = color_header, bg = color_canevas,font = size20)
-		name_column.grid(row = 1, column = 0, pady=1,padx=1)
+		name_column.grid(row = 0, column = 0, pady=1,padx=1)
 		name_column = Tkinter.Label(theGrid,text = "Qt", fg = color_header,bg = color_canevas,font = size20)
-		name_column.grid(row = 1, column = 1, pady=1,padx=1)
+		name_column.grid(row = 0, column = 1, pady=1,padx=1)
 		name_column = Tkinter.Label(theGrid,text = " € tot", fg = color_header, bg = color_canevas,font = size20)
-		name_column.grid(row = 1, column = 2, pady=1,padx=1)
+		name_column.grid(row = 0, column = 2, pady=1,padx=1)
                 nbCol = 3
+                ligne = 0
                        
             for i in range(nbCol):
                 theGrid.columnconfigure(i,weight=1)
-            ligne = 1
             bouteilles = 0
 
                 
@@ -2201,19 +2201,18 @@ class Contexte (): #threading.Thread
                 name_column.grid(row = 1, column = 3, pady=2,padx=4)
                 name_column = Tkinter.Label(theGrid,text = " Qty ", fg = color_header,bg = color_canevas,font = size20)
                 name_column.grid(row = 1, column = 4, pady=2,padx=4)
+                ligne = 1
 
             elif brace_type ==1:
-                name_column = Tkinter.Label(theGrid,text = "PRODUITS", fg = color_header, bg = color_canevas,font = size22)
-                name_column.grid(row = 0, column = 0,columnspan = 3, pady=4)
-                name_column = Tkinter.Label(theGrid,text = "Nom", fg = color_header, bg = color_canevas,font = size20)
-                name_column.grid(row = 1, column = 0, pady=2,padx=4)
+                name_column = Tkinter.Label(theGrid,text = "PRODUIT", fg = color_header, bg = color_canevas,font = size20)
+                name_column.grid(row = 0, column = 0, pady=2,padx=4)
                 name_column = Tkinter.Label(theGrid,text = "€/u", fg = color_header,bg = color_canevas,font = size20)
-                name_column.grid(row = 1, column = 1, pady=2,padx=4)
+                name_column.grid(row = 0, column = 1, pady=2,padx=4)
                 name_column = Tkinter.Label(theGrid,text = " Qty ", fg = color_header,bg = color_canevas,font = size20)
-                name_column.grid(row = 1, column = 2, pady=2,padx=4)
+                name_column.grid(row = 0, column = 2, pady=2,padx=4)
+                ligne = 0
             
             print "Votre Stock : "
-            ligne = 5
             if all_stock :
                 refset = c.AllProducts.elements.keys()[self.debut : self.debut+TAILLE_ECRAN]
             else:
@@ -2259,13 +2258,15 @@ class Contexte (): #threading.Thread
 	            name_column.grid(row = 1, column = 2, pady=2,padx=4)
 	            name_column = Tkinter.Label(theGrid,text = "Accès", fg = color_header,bg = color_canevas,font = size20)
 	            name_column.grid(row = 1, column = 3, pady=2,padx=4)
+                    ligne = 1
             elif brace_type == 1:
 	            name_column = Tkinter.Label(theGrid,text = "Bracelet", fg = color_header, bg = color_canevas,font = size20)
-	            name_column.grid(row = 1, column = 0, pady=1,padx=2)
+	            name_column.grid(row = 0, column = 0, pady=1,padx=2)
 	            name_column = Tkinter.Label(theGrid,text = "COLLAB", fg = color_header, bg = color_canevas,font = size20)
-	            name_column.grid(row = 1, column = 1, pady=1,padx=2)
+	            name_column.grid(row = 0, column = 1, pady=1,padx=2)
 	            name_column = Tkinter.Label(theGrid,text = "Accès", fg = color_header,bg = color_canevas,font = size20)
-	            name_column.grid(row = 1, column = 2, pady=1,padx=2)
+	            name_column.grid(row = 0, column = 2, pady=1,padx=2)
+                    ligne = 0
      
             print "Vos collaborateurs : "
             ligne = 5
@@ -2398,8 +2399,8 @@ class Contexte (): #threading.Thread
             return False
         if barbaraConfiguration.applicationRole == 'b':
 	    montant = 0.0
-            if client.fields[u"amount"]:
-                montant = - infloat(client.fields[u"amount"])
+            if self.client.isActive():
+                montant = - self.client.getAmount()
             aBrace = c.client_DebitAllBrace(self.user.id,self.client.id)
             if aBrace:
                 c.AllTransactions.total_debit = c.AllTransactions.total_debit + float(montant)
@@ -2648,7 +2649,7 @@ class Contexte (): #threading.Thread
                                     ecran_message(self,0,u"DATE HEURE",u"!"+self.nom_choisi,u"inscrite.")
                             elif self.mode == CB_Vente_Bracelets:
                                 print "Remboursement CASH"
-                                if self.ajouter_argent():
+                                if self.rembourser_argent():
                                     ecran_vente_bracelets(self,False)
                                     self.qty_choisie = -1
                                 else:

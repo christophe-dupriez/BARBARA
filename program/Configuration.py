@@ -923,6 +923,12 @@ class Braces(ConfigurationObject):
     def isActive(self):
         return self.fields[u"amount"]
 
+    def getAmount(self):
+        if self.fields[u"amount"]:
+	   return infloat(self.fields[u"amount"])
+        else:
+           return 0.0
+
 class Qty(ConfigurationObject):
 
     def __repr__(self):
