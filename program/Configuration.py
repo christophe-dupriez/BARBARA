@@ -264,6 +264,27 @@ class Configuration(object):
             traceback.print_exc()
         return None
 
+    def client_DebitAllBrace(self,userid,barcode):
+        to_protect = userid+u'/'+barcode
+        protect_crc = zlib.crc32(to_protect)
+        response = requests.get(self.barbaraConfig.applicationURL+u'/brace/debitall/'+to_protect+u"/"+unicode(protect_crc))
+
+        print u"Request status="+unicode(response.status_code)
+        if response.status_code == 200:
+            try:
+                data = response.json()
+                if data:
+                    print("data="+unicode(data))
+                    return self.storeObject(data)
+                else:
+                    print("no data?")
+            except:
+                traceback.print_exc()
+        else:
+            print u"Request status="+unicode(response.status_code)
+            traceback.print_exc()
+        return None
+
     def client_BuyWithBrace(self,userid,barcode,amount,panier):
         basket = u""
         for aProduct in panier:
@@ -505,6 +526,7 @@ class AllTransactions(AllObjects):
         AllObjects.__init__(self,config)
         self.filename = u"transac.csv"
         self.total_credit = 0.0
+        self.total_debit = 0.0
         self.total_buyWithBrace = 0.0
         self.total_bottles = 0
         self.fieldnames = ["time","type","brace","amount","product","qty","user"]
@@ -521,6 +543,7 @@ class AllTransactions(AllObjects):
         if csvfile:
             try:
                 self.total_credit = 0.0
+                self.total_debit = 0.0
                 self.total_buyWithBrace = 0.0
                 self.total_bottles = 0
                 for row in reader:
@@ -546,7 +569,10 @@ class AllTransactions(AllObjects):
                     if row[u"type"] == u"C": #Credit or Debit of a Brace
                         if aBrace:
                             self.load_credit(aUser,aBrace,amount)
-                            self.total_credit = self.total_credit+amount
+			    if amount > 0:
+	                            self.total_credit = self.total_credit+amount
+			    elif amount < 0:
+	                            self.total_debit = self.total_debit+amount
                     elif row[u"type"] == u"B": #Buy(remit) with a Brace some product or service
                         if aBrace:
                             self.load_buyWithBrace(aUser,aBrace,amount,None)
@@ -587,6 +613,13 @@ class AllTransactions(AllObjects):
             self.load_credit(aUser,aBrace,amount)
             Transaction().make_credit(self.config,aUser,aBrace,amount)
             self.total_credit = self.total_credit + amount
+        
+    def debitAll(self,aUser,aBrace,amount):
+            if aBrace.fields[u"amount"]:
+		    amount = - infloat(aBrace.fields[u"amount"])
+	            self.load_credit(aUser,aBrace, amount )
+	            Transaction().make_credit(self.config,aUser,aBrace,amount)
+        	    self.total_debit = self.total_debit + amount # amount is negative, total_debit is also!
         
     def buyWithBrace(self,aUser,aBrace,total,basket):
             self.load_buyWithBrace(aUser,aBrace,total,basket)
@@ -1104,6 +1137,35 @@ class credit_brace(app.page):
                 return jsonpickle.encode(aBrace)
             except:
                 print(braceId+u"+u"+unicode(amount))
+                traceback.print_exc()
+        else:
+            print(userId+u": user does not exist?")
+        return u""
+
+# Rembourser l'argent au bracelet
+class debitAll_brace(app.page):
+    path = u'/brace/debitall/(.*)/(.*)/(.*)'
+
+    def GET(self, userId, braceId, checksum):
+        web.header('Content-Type', u'application/json;charset=utf-8')
+        protect_crc = zlib.crc32(userId+u"/"+braceId)
+        if checksum != unicode(protect_crc):
+            print(checksum+u": checksum should be "+unicode(protect_crc))
+            return u""
+        if userId and userId in c.AllUsers.elements:
+            try:
+                aUser =  c.AllUsers.elements[userId]
+                if not braceId in c.AllBraces.elements:
+                    print(braceId+u": brace does not exist?")
+                    aRow = c.AllBraces.defaultRow(braceId)
+                    aRow['sold'] = u"yes"
+                    aBrace = c.AllBraces.assignObject(braceId,aRow)
+                else:
+                    aBrace = c.AllBraces.elements[braceId]
+                c.AllTransactions.debitAll(aUser,aBrace)
+                return jsonpickle.encode(aBrace)
+            except:
+                print(braceId+u" to cancel?")
                 traceback.print_exc()
         else:
             print(userId+u": user does not exist?")

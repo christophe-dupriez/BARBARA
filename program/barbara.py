@@ -132,7 +132,7 @@ def networkSendBroadcast():
   s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
   while Alive:
-    statistics = unicode(c.AllTransactions.total_buyWithBrace)+"/"+unicode(c.AllTransactions.total_credit)
+    statistics = unicode(c.AllTransactions.total_buyWithBrace)+"/"+unicode(c.AllTransactions.total_credit)+u"-"+unicode(c.AllTransactions.total_debit)
     message = barbaraConfiguration.applicationURL+'\t'+statistics+'\t'+compactNow()
     s.sendto(messageCRC(message)+'\t'+message+'\n', ('<broadcast>', barbaraConfiguration.broadcastPort))
     try: # May fail if received too early...
@@ -1141,26 +1141,26 @@ stat_time.place(anchor=Tkinter.NW, x = 1 , y = 1) #positionnement
 #-------Variables Clavier-------#
 
 principal =[u"Vente Bracelets",u"Vente Produits",u"Utilisateurs",u"Produits",u"Gestion"]
-principal_barcode=[1000000010039,1000000010053,1000000011036,1000000010114,1000000011050]
+principal_barcode=[int(CB_Vente_Bracelets),int(CB_Vente_Produits),int(CB_Collabs),int(CB_Stock),int(CB_Gestion)]
 
 ticket_barcode=[1000000012019,1000000012026,1000000012033,1000000012040,1000000012057,1000000012064,1000000012071,1000000012088,1000000012095]
 
 liste_barcode=[1000000012019,1000000012026,1000000012033,1000000012040,1000000012057,1000000012064,1000000012071,1000000012088,1000000012095]
 
-fonction_vente_bracelets=[u"Nouveau Bracelet",u"Paiement CASH", u"Paiement CB"]
-fonction_vente_bracelets_barcode=[1000000010107,1000000010015,1000000010022]
+fonction_vente_bracelets=[u"Nouveau Bracelet",u"ANNULER",u"Paiement CASH", u"Rembours.CASH", u"Paiement CB"]
+fonction_vente_bracelets_barcode=[int(CB_Arbitraire),int(CB_Vente_Bracelets),int(CB_Cash),int(CB_Modifier),int(CB_Carte)]
 
 fonction_vente_produits=[u"Retirer Consom.s",u"Ajouter Consom.s",u"ANNULER"]
-fonction_vente_produits_barcode=[1000000010046,1000000010022,1000000010053]
+fonction_vente_produits_barcode=[int(CB_Modifier),1000000010022,int(CB_Vente_Produits)]
 
 fonction_utilisateurs=[u"Nouvel utilisateur",u"Désactiver Utilisateur",u"OK Vente Bracelets",u"OK Vente Produits",u"OK Gestion",u"Annuler Droits",u"Sauvegarder"]
-fonction_utilisateurs_barcode=[1000000010107,1000000010046,1000000000016,1000000000207,1000000009002,1000000011098,1000000010015]
+fonction_utilisateurs_barcode=[int(CB_Arbitraire),int(CB_Modifier),1000000000016,1000000000207,1000000009002,int(CB_Effacer_Nombre),int(CB_Cash)]
 
 fonction_produits=[u"Nouveau Produit",u"Désactiver Produit",u"Sauvegarder"]
-fonction_produits_barcode=[1000000010107,1000000010046,1000000010015]
+fonction_produits_barcode=[int(CB_Arbitraire),int(CB_Modifier),int(CB_Cash)]
 
-fonction_gestion=[u"Éteindre"]
-fonction_gestion_barcode=[1000000011067]
+fonction_gestion=[u"Éteindre",u"MàJ Logiciel"] #,u"Wifi Access"
+fonction_gestion_barcode=[int(CB_Shutdown),int(CB_Initialiser)]
 
 clavier=[1,2,3,4,5,6,7,8,9,u"DEL",0,u"EFF"]
 
@@ -2392,6 +2392,24 @@ class Contexte (): #threading.Thread
             c.AllTransactions.credit(self.user,self.client,montant)
             return True
 
+    # Rendre la totalité de l'argent du bracelet
+    def rembourser_argent(self):
+        if not self.client:
+            return False
+        if barbaraConfiguration.applicationRole == 'b':
+	    montant = 0.0
+            if client.fields[u"amount"]:
+                montant = - infloat(client.fields[u"amount"])
+            aBrace = c.client_DebitAllBrace(self.user.id,self.client.id)
+            if aBrace:
+                c.AllTransactions.total_debit = c.AllTransactions.total_debit + float(montant)
+                return True
+            else:
+                return False
+        else:
+            c.AllTransactions.debitAll(self.user,self.client)
+            return True
+
     # Retire l'argent du bracelet
     def retirer_argent(self):
         if not self.client:
@@ -2629,7 +2647,13 @@ class Contexte (): #threading.Thread
                                     exec_command(self,[u'sudo',u'date',u'+"'+MANUAL_TIME_FORMAT+u'"','-s',u'"'+self.nom_choisi+u'"'])
                                     ecran_message(self,0,u"DATE HEURE",u"!"+self.nom_choisi,u"inscrite.")
                             elif self.mode == CB_Vente_Bracelets:
-                                self.modifier = True
+                                print "Remboursement CASH"
+                                if self.ajouter_argent():
+                                    ecran_vente_bracelets(self,False)
+                                    self.qty_choisie = -1
+                                else:
+                                    ecran_message(self,0,u"!Problème de réseau?",u"Transaction annulée")
+                                    self.partial_init()
                             elif self.mode == CB_Vente_Produits:
                                 self.modifier = True
                             elif self.mode == CB_Collabs:
