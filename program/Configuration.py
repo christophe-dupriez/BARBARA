@@ -614,7 +614,7 @@ class AllTransactions(AllObjects):
             Transaction().make_credit(self.config,aUser,aBrace,amount)
             self.total_credit = self.total_credit + amount
         
-    def debitAll(self,aUser,aBrace,amount):
+    def debitAll(self,aUser,aBrace):
             if aBrace.fields[u"amount"]:
 		    amount = - infloat(aBrace.fields[u"amount"])
 	            self.load_credit(aUser,aBrace, amount )
