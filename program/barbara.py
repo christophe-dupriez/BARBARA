@@ -796,11 +796,20 @@ def lister_bracelets(contexte):
     printerString = barbaraConfiguration.printListBarcode
     if printerString:
         print "Printing using "+barbaraConfiguration.printDirectory+"liste.txt"
+        total = 0.0
+        nb = 0
         with open (barbaraConfiguration.printDirectory+"liste.txt","w") as printFile:
+	  try:
 	    for aBrace in c.AllBraces.elements_refreshed():
 		objectToPrint = c.AllBraces.elements[aBrace]
-                printFile.write(printerString % { u"barcode":objectToPrint.id, u"amount":unicode(objectToPrint.getAmount()) } ) #u"name":unicode(objectToPrint.name(c))
-        return exec_command(contexte,["lpr","-o","raw","-r",barbaraConfiguration.printDirectory+"liste.txt"])
+                amount = objectToPrint.getAmount()
+                total += amount
+                nb += 1
+                printFile.write(printerString % { u"barcode":objectToPrint.id, u"amount":amount } ) #u"name":unicode(objectToPrint.name(c))
+          except:
+            traceback.print_exc()
+          printFile.write(u"\r\n"+unicode(nb)+" bracelets, Total: "+unicode(total)+" euros\r\n\f")
+        return exec_command(contexte,["lpr","-o","raw",barbaraConfiguration.printDirectory+"liste.txt"])
     else:
         ecran_message(contexte,0,u"Liste",u"pas configuree?")
 
