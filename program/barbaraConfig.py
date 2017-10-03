@@ -37,6 +37,7 @@ class barbaraConfig():
         self.applicationRole = 'a'
         self.alignPrinter = None
         self.printBarcode = None
+        self.printListBarcode = None
         self.printDirectory = hardConfig.rundirectory
         self.crlf=None
         self.lf=None
@@ -95,6 +96,8 @@ class barbaraConfig():
                                 self.alignPrinter = anItem[1]
                             elif key == u'barcode':
                                 self.printBarcode = anItem[1]
+                            elif key == u'list':
+                                self.printListBarcode = anItem[1]
                             elif key == u'directory':
                                 self.printDirectory = unicode(anItem[1])
                                 print anItem[1]
@@ -171,6 +174,8 @@ class barbaraConfig():
                     self.alignPrinter = self.cleanString(self.alignPrinter)
                 if self.printBarcode:
                     self.printBarcode = self.cleanString(self.printBarcode)
+                if self.printListBarcode:
+                    self.printListBarcode = self.cleanString(self.printListBarcode)
                     
                 if self.applicationRole: # a=alone, b,r=binded, remote, c,s=central/server
                     self.applicationRole = self.applicationRole[0]

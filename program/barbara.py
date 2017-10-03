@@ -790,6 +790,20 @@ def linePrinter(contexte,barcode,someText):
 def linePrinterObject(contexte,objectToPrint,printerString):
     return linePrinter(contexte,objectToPrint.id,printerString % { "barcode":objectToPrint.id, "name":objectToPrint.name(c) } )
 
+def lister_bracelets(contexte):
+    global c
+    
+    printerString = barbaraConfiguration.printListBarcode
+    if printerString:
+        print "Printing using "+barbaraConfiguration.printDirectory+"liste.txt"
+        with open (barbaraConfiguration.printDirectory+"liste.txt","w") as printFile:
+	    for aBrace in c.AllBraces.elements_refreshed():
+		objectToPrint = c.AllBraces.elements[aBrace]
+                printFile.write(printerString % { u"barcode":objectToPrint.id, u"amount":unicode(objectToPrint.getAmount()) } ) #u"name":unicode(objectToPrint.name(c))
+        return exec_command(contexte,["lpr","-o","raw","-r",barbaraConfiguration.printDirectory+"liste.txt"])
+    else:
+        ecran_message(contexte,0,u"Liste",u"pas configuree?")
+
 # Affichage de l'ecran et surtout impression d'un bracelet
 def generer_bracelet(contexte):
     #print "ECRAN D'IMPRESSION D'UN BRACELET"
@@ -1159,8 +1173,8 @@ fonction_utilisateurs_barcode=[int(CB_Arbitraire),int(CB_Modifier),1000000000016
 fonction_produits=[u"Nouveau Produit",u"Désactiver Produit",u"Sauvegarder"]
 fonction_produits_barcode=[int(CB_Arbitraire),int(CB_Modifier),int(CB_Cash)]
 
-fonction_gestion=[u"Éteindre",u"MàJ Logiciel"] #,u"Wifi Access"
-fonction_gestion_barcode=[int(CB_Shutdown),int(CB_Initialiser)]
+fonction_gestion=[u"Imprimer Soldes",u"Éteindre",u"MàJ Logiciel"] #,u"Wifi Access"
+fonction_gestion_barcode=[int(CB_Creer_Sans_Barcode),int(CB_Shutdown),int(CB_Initialiser)]
 
 clavier=[1,2,3,4,5,6,7,8,9,u"DEL",0,u"EFF"]
 
@@ -2650,7 +2664,7 @@ class Contexte (): #threading.Thread
                             elif self.mode == CB_Vente_Bracelets:
                                 print "Remboursement CASH"
                                 if self.rembourser_argent():
-                                    ecran_vente_bracelets(self,False)
+                                    ecran_client(self)
                                     self.qty_choisie = -1
                                 else:
                                     ecran_message(self,0,u"!Problème de réseau?",u"Transaction annulée")
@@ -2708,6 +2722,8 @@ class Contexte (): #threading.Thread
                                 self.utilisateur=c.AllUsers.generateBarcode()
                                 if self.utilisateur:
                                     ecran_utilisateur(self)
+                            elif self.mode == CB_Gestion:
+                                lister_bracelets(self)
                         elif (action == CB_Initialiser):
                             if self.mode == CB_Vente_Bracelets:
                                 ecran_sync_printer(self)
