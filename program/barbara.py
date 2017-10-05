@@ -1171,17 +1171,17 @@ ticket_barcode=[1000000012019,1000000012026,1000000012033,1000000012040,10000000
 
 liste_barcode=[1000000012019,1000000012026,1000000012033,1000000012040,1000000012057,1000000012064,1000000012071,1000000012088,1000000012095]
 
-fonction_vente_bracelets=[u"Nouveau Bracelet",u"ANNULER",u"Paiement CASH", u"Rembours.CASH", u"Paiement CB"]
-fonction_vente_bracelets_barcode=[int(CB_Arbitraire),int(CB_Vente_Bracelets),int(CB_Cash),int(CB_Modifier),int(CB_Carte)]
+fonction_vente_bracelets=[u"Nouveau Bracelet",u"PAYÉ CASH", u"Rembourser CASH", u"Paiement CB",u"ANNULER"]
+fonction_vente_bracelets_barcode=[int(CB_Arbitraire),int(CB_Vente_Bracelets),int(CB_Cash),int(CB_Modifier),int(CB_Carte),int(CB_Vente_Bracelets)]
 
 fonction_vente_produits=[u"Retirer Consom.s",u"Ajouter Consom.s",u"ANNULER"]
-fonction_vente_produits_barcode=[int(CB_Modifier),1000000010022,int(CB_Vente_Produits)]
+fonction_vente_produits_barcode=[int(CB_Modifier),int(CB_Carte),int(CB_Vente_Produits)]
 
-fonction_utilisateurs=[u"Nouvel utilisateur",u"Désactiver Utilisateur",u"OK Vente Bracelets",u"OK Vente Produits",u"OK Gestion",u"Annuler Droits",u"Sauvegarder"]
+fonction_utilisateurs=[u"Nouvel utilisateur",u"Désactiver Utilisateur",u"OK Vente Bracelets",u"OK Vente Produits",u"OK Gestion",u"Annuler Droits",u"SAUVEGARDER"]
 fonction_utilisateurs_barcode=[int(CB_Arbitraire),int(CB_Modifier),1000000000016,1000000000207,1000000009002,int(CB_Effacer_Nombre),int(CB_Cash)]
 
-fonction_produits=[u"Nouveau Produit",u"Désactiver Produit",u"Sauvegarder"]
-fonction_produits_barcode=[int(CB_Arbitraire),int(CB_Modifier),int(CB_Cash)]
+fonction_produits=[u"Nouveau Produit",u"Désactiver Produit",u"Activer Produit",u"SAUVEGARDER"]
+fonction_produits_barcode=[int(CB_Arbitraire),int(CB_Modifier),int(CB_Carte),int(CB_Cash)]
 
 fonction_gestion=[u"Imprimer Soldes",u"Éteindre",u"MàJ Logiciel"] #,u"Wifi Access"
 fonction_gestion_barcode=[int(CB_Creer_Sans_Barcode),int(CB_Shutdown),int(CB_Initialiser)]
@@ -2861,6 +2861,14 @@ class Contexte (): #threading.Thread
                             elif self.mode == CB_Vente_Produits:
                                 print "Ajouter des consommations"
                                 self.modifier = False
+                            elif self.mode == CB_Stock:
+                                if self.produit:
+                                    self.produit.setActive()
+                                    if self.sauver_produit(True):
+                                        ecran_produit(self)
+                                    else:
+                                        ecran_message(self,0,u"!Problème de réseau?",u"Activer Produit",u"annulé")
+                                        self.partial_init()
                         elif (action == CB_Shutdown):
                             if self.mode == CB_Gestion:
                                 SHUT_NOW(self)

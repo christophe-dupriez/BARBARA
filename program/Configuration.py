@@ -910,13 +910,18 @@ class Products(ConfigurationObject):
     def setInactive(self):
         self.fields[u'deny'] = u'1'
 
+    def setActive(self):
+        self.fields[u'deny'] = u''
+
     def isActive(self):
         if not u"deny" in self.fields:
             return True
         denial = self.fields[u"deny"]
         if denial:
             denial = denial[0].lower()
-        return not (denial and (denial in ['o','y','+','1','2','3','4','5','6','7','8','9']) )
+            return not (denial in ['o','y','+','1','2','3','4','5','6','7','8','9'])
+        else:
+            return True
 
 class Braces(ConfigurationObject):
 
