@@ -570,7 +570,7 @@ def ecran_stock(contexte,all_stock = False) :
         ecran_produit(contexte)
         return
 
-    contexte.syncListe(c.AllProducts.elements_refreshed())                
+    contexte.syncListe(c.AllProducts)                
     contexte.tk_stock(all_stock)   
 
     if hardConf.oled:
@@ -578,7 +578,7 @@ def ecran_stock(contexte,all_stock = False) :
         #Préparation de l'écran
         lcd_screen(contexte)
 
-        for key in c.AllProducts.elements.keys()[contexte.debut : contexte.fin]:
+        for key in contexte.currListe[contexte.debut : contexte.fin]:
             objet = c.AllProducts.elements[key]
             print objet.fields['barcode'] + " " + objet.fields['name'] + " " + objet.fields['price'] + " " + objet.fields['qty']
                 
@@ -602,7 +602,7 @@ def ecran_collaborateurs(contexte,all_collabs = False) :
         ecran_utilisateur(contexte)
         return
 
-    contexte.syncListe(c.AllUsers.elements_refreshed())                
+    contexte.syncListe(c.AllUsers)                
     contexte.tk_collaborateurs(all_collabs)   
 
     if hardConf.oled:
@@ -610,7 +610,7 @@ def ecran_collaborateurs(contexte,all_collabs = False) :
         #Préparation de l'écran
         lcd_screen(contexte)
 
-        for key in c.AllUsers.elements.keys()[contexte.debut : contexte.fin]:
+        for key in contexte.currListe[contexte.debut : contexte.fin]:
             objet = c.AllUsers.elements[key]
             print objet.fields['barcode'] + " " + objet.fields['name'] + " " + objet.fields['price'] + " " + objet.fields['qty']
                 
@@ -631,7 +631,7 @@ def ecran_scanners(contexte,all_scanners = False) :
         ecran_scanner(contexte)
         return
 
-    contexte.syncListe(c.AllScanners.elements_refreshed())                
+    contexte.syncListe(c.AllScanners)                
     contexte.tk_scanners(all_scanners)   
 
     if hardConf.oled:
@@ -639,7 +639,7 @@ def ecran_scanners(contexte,all_scanners = False) :
         #Préparation de l'écran
         lcd_screen(contexte)
 
-        for key in c.AllScanners.elements.keys()[contexte.debut : contexte.fin]:
+        for key in contexte.currListe[contexte.debut : contexte.fin]:
             objet = c.AllScanners.elements[key]
             print objet.id + " " + objet.fields['name'] + " " + objet.fields['pin'] + " " + objet.fields['deny']
                 
@@ -660,7 +660,7 @@ def ecran_scanners(contexte,all_scanners = False) :
 def ecran_facture(contexte) :
     #print "ECRAN DE FACTURE"
     
-    contexte.syncListe(contexte.prev_panier)                
+    contexte.syncListeKey(contexte.prev_panier)                
     contexte.tk_facture()
 
     if hardConf.oled:                
@@ -669,7 +669,7 @@ def ecran_facture(contexte) :
         screen.linePos = lcd_screen(contexte)
         print "Votre Facture : "
         index = contexte.debut
-        for element in contexte.prev_panier.keys() [contexte.debut : contexte.fin]:            
+        for element in contexte.currListe [contexte.debut : contexte.fin]:            
             #récupération des infos à partir de la base de données
 
             #print ("The price of one {} is {} euros \nYou took {} of them" .format(element.fields["name"], element.fields["price"], contexte.panier[element])) #affichage d'une "Facture"
@@ -800,7 +800,8 @@ def lister_bracelets(contexte):
         nb = 0
         with open (barbaraConfiguration.printDirectory+"liste.txt","w") as printFile:
 	  try:
-	    for aBrace in c.AllBraces.elements_refreshed():
+            contexte.syncListe(c.AllBraces)
+	    for aBrace in contexte.currListe:
 		objectToPrint = c.AllBraces.elements[aBrace]
                 amount = objectToPrint.getAmount()
                 total += amount
@@ -809,7 +810,7 @@ def lister_bracelets(contexte):
           except:
             traceback.print_exc()
           printFile.write(u"\r\n"+unicode(nb)+" bracelets, Total: "+unicode(total)+" euros\r\n\f")
-        return exec_command(contexte,["lpr","-o","raw",barbaraConfiguration.printDirectory+"liste.txt"])
+        return exec_command(contexte,["lpr","-r",barbaraConfiguration.printDirectory+"liste.txt"])
     else:
         ecran_message(contexte,0,u"Liste",u"pas configuree?")
 
@@ -1360,10 +1361,12 @@ def Ticket():
 
 def Liste():
     global contexte_unique
+    print "LISTE"
     contexte_unique.menu = contexte_unique.ListeButton #.set("liste")
     chiffre=0
-    if (contexte_unique.mode == CB_Vente_Produits or contexte_unique.mode == CB_Stock):
-        refset = c.AllProducts.elements_refreshed().keys()[contexte_unique.debut : contexte_unique.debut+TAILLE_ECRAN]
+    if contexte_unique.mode == CB_Vente_Produits:
+        contexte_unique.syncListe(c.AllProducts,True)
+        refset = contexte_unique.currListe[contexte_unique.debut : contexte_unique.debut+TAILLE_ECRAN]
         bestFont = chooseFont(len(refset))
         produit={}
         for key in refset:
@@ -1372,18 +1375,31 @@ def Liste():
             produit[key]=chiffre
             Tkinter.Button(contexte_unique.LeftMenu,text=adaptText(len(refset),texte),bg=color_liste,fg=color_texte,font=size17,anchor=Tkinter.W,command=lambda key=key: touchListe(produit[key]+1)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
             chiffre+=1
+    elif contexte_unique.mode == CB_Stock:
+        contexte_unique.syncListe(c.AllProducts)
+        refset = contexte_unique.currListe[contexte_unique.debut : contexte_unique.debut+TAILLE_ECRAN]
+        bestFont = chooseFont(len(refset))
+        produit={}
+        for key in refset:
+            objet = c.AllProducts.elements[key]
+            texte = u" " + unicode(chiffre+1) + u") " + ("" if objet.isActive() else "** ") + objet.fields[u'price'] + u"€ : " + objet.fields[u'name'][:15]
+            produit[key]=chiffre
+            Tkinter.Button(contexte_unique.LeftMenu,text=adaptText(len(refset),texte),bg=color_liste,fg=color_texte,font=size17,anchor=Tkinter.W,command=lambda key=key: touchListe(produit[key]+1)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
+            chiffre+=1
     elif(contexte_unique.mode == CB_Collabs):
-        refset = c.AllUsers.elements_refreshed().keys()[contexte_unique.debut : contexte_unique.debut+TAILLE_ECRAN]
+        contexte_unique.syncListe(c.AllUsers)
+        refset = contexte_unique.currListe[contexte_unique.debut : contexte_unique.debut+TAILLE_ECRAN]
         bestFont = chooseFont(len(refset))
         user={}
         for key in refset:
             objet = c.AllUsers.elements[key]
-            texte = u" " + unicode(chiffre+1) + u") " + objet.fields[u'name'] + u" : " + objet.fields[u'access']
+            texte = u" " + unicode(chiffre+1) + u") " + ("" if objet.isActive() else "** ") + objet.fields[u'name'] + u" : " + objet.fields[u'access']
             user[key]=chiffre
             Tkinter.Button(contexte_unique.LeftMenu,text=adaptText(len(refset),texte),bg=color_liste,fg=color_texte,font=size19,anchor=Tkinter.W,command=lambda key=key: touchListe(user[key]+1)).pack(fill=Tkinter.BOTH,expand=1,side=Tkinter.TOP)
             chiffre+=1
     elif (contexte_unique.mode == CB_Scanners):
-        refset = c.AllScanners.elements_refreshed().keys()[contexte_unique.debut : contexte_unique.debut+TAILLE_ECRAN]
+        contexte_unique.syncListe(c.AllScanners)
+        refset = contexte_unique.currListe[contexte_unique.debut : contexte_unique.debut+TAILLE_ECRAN]
         bestFont = chooseFont(len(refset))
         scan={}
         for key in refset:
@@ -1584,6 +1600,7 @@ class Contexte (): #threading.Thread
         self.message = []
         self.pref_qty = u"€ "
         self.pref_nom = u"Nom:"
+	self.currListe = []
 
     def __init__(self,rank,scanid):
         #threading.Thread.__init__(self)
@@ -1726,8 +1743,10 @@ class Contexte (): #threading.Thread
                                 if len(val) >= 6:
                                     self.z5 = int(val[-6])
         
-    def syncListe(self,elements):
-        nbElem = len(elements)
+    def syncListe(self,all,onlyActive = False):
+	keys = sorted(all.elements_refreshed(onlyActive),key=lambda o: all.elements[o].sort())
+        nbElem = len(all.elements)
+	#print unicode(nbElem)+u": ["+",".join(k for k in keys)+"]"
         if self.debut >= nbElem :
             self.debut = 0
         elif self.debut < 0 :
@@ -1735,22 +1754,37 @@ class Contexte (): #threading.Thread
         self.fin  = self.debut +  TAILLE_ECRAN
         if self.fin > nbElem :
             self.fin = nbElem
-        return nbElem
+        self.currListe = keys
+        return keys
 
-    def syncChoix(self,index,elements):
-        self.syncListe(elements)
+    def syncListeKey(self,elements):
+	keys = sorted(elements)
+        nbElem = len(elements)
+	print unicode(nbElem)+u": ["+",".join(k for k in keys)+"]"
+        if self.debut >= nbElem :
+            self.debut = 0
+        elif self.debut < 0 :
+            self.debut = 0
+        self.fin  = self.debut +  TAILLE_ECRAN
+        if self.fin > nbElem :
+            self.fin = nbElem
+        self.currListe = keys
+        return keys
+
+    def syncChoix(self,index,all):
+        keys = self.syncListe(all)
         index = index + self.debut
         if index >= self.fin:
             return None
-        key = elements.keys()[index]
-        return elements[key]
+        key = keys[index]
+        return all.elements[key]
 
     def syncChoixTicket(self,index,elements):
-        self.syncListe(elements)
+        keys = self.syncListeKey(elements)
         index = index + self.debut
         if index >= self.fin:
             return None
-        key = elements.keys()[index]
+        key = keys[index]
         return key
 
     # Fonction TKINTER : affiche le numero de l'utilisateur en bas à droite
@@ -2237,7 +2271,7 @@ class Contexte (): #threading.Thread
             
             print "Votre Stock : "
             if all_stock :
-                refset = c.AllProducts.elements.keys()[self.debut : self.debut+TAILLE_ECRAN]
+                refset = contexte_unique.currListe[self.debut : self.debut+TAILLE_ECRAN]
             else:
                 refset = [self.produit.id]
             for key in refset:
@@ -2292,9 +2326,8 @@ class Contexte (): #threading.Thread
                     ligne = 0
      
             print "Vos collaborateurs : "
-            ligne = 5
             if all_collabs :
-                refset = c.AllUsers.elements.keys()[self.debut : self.debut+TAILLE_ECRAN]
+                refset = contexte_unique.currListe[self.debut : self.debut+TAILLE_ECRAN]
             else:
                 refset = [self.utilisateur.id]
             for key in refset:
@@ -2340,7 +2373,7 @@ class Contexte (): #threading.Thread
             print "Vos scanners : "
             ligne = 5
             if all_scans :
-                refset = c.AllScanners.elements.keys()[self.debut : self.debut+TAILLE_ECRAN]
+                refset = self.currListe[self.debut : self.debut+TAILLE_ECRAN]
             else:
                 refset = [self.scanner.id]
             for key in refset:
@@ -2756,7 +2789,7 @@ class Contexte (): #threading.Thread
                                 if brace_type == 0:
 				    ecran_facture(self)
                                 elif brace_type == 1:
-				    self.syncListe(c.AllProducts.elements_refreshed())                
+				    self.syncListe(c.AllProducts)                
                             elif self.mode == CB_Stock:
                                 ecran_stock(self,True)
                             elif self.mode == CB_Collabs:
@@ -2769,7 +2802,7 @@ class Contexte (): #threading.Thread
                                 if brace_type == 0:
 				    ecran_facture(self)
                                 elif brace_type == 1:
-				    self.syncListe(c.AllProducts.elements_refreshed())                
+				    self.currListe = self.syncListe(c.AllProducts)                
                             elif self.mode == CB_Stock:
                                 ecran_stock(self,True)
                             elif self.mode == CB_Collabs:
@@ -2835,26 +2868,26 @@ class Contexte (): #threading.Thread
                     elif res in menu_choices :
                             aChoice = menu_choices[res] - 1 # Choix numéroté à partir de 1
                             if self.mode == CB_Stock:
-                                self.produit = self.syncChoix(aChoice,c.AllProducts.elements)
+                                self.produit = self.syncChoix(aChoice,c.AllProducts)
                                 if self.produit:
                                     self.nom_choisi = self.produit.fields["name"]
                                     self.setQty(self.produit.getCents())
                                     ecran_produit(self)
                             elif self.mode == CB_Collabs:
-                                self.utilisateur = self.syncChoix(aChoice,c.AllUsers.elements)
+                                self.utilisateur = self.syncChoix(aChoice,c.AllUsers)
                                 if self.utilisateur:
                                     self.nom_choisi = self.utilisateur.fields["name"]
                                     self.setQty(self.utilisateur.getAccessCode())
                                     ecran_utilisateur(self)
                             elif self.mode == CB_Scanners:
-                                self.scanner = self.syncChoix(aChoice,c.AllScanners.elements)
+                                self.scanner = self.syncChoix(aChoice,c.AllScanners)
                                 if self.scanner:
                                     self.nom_choisi = self.scanner.fields["name"]
                                     self.setQty(self.scanner.fields["client"])
                                     ecran_scanner(self)
                             elif self.mode == CB_Vente_Produits:
                                 if contexte_unique.menu == contexte_unique.ListeButton:
-                                    self.produit = self.syncChoix(aChoice,c.AllProducts.elements)
+                                    self.produit = self.syncChoix(aChoice,c.AllProducts)
                                     if self.produit:
                                         if self.modifier:
                                             self.retirer_produit()                    

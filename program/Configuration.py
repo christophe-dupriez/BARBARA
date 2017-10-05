@@ -314,8 +314,18 @@ class ConfigurationObject(object):
         self.fields = {}
         self.id = None
 
+    def sort(self):
+	if self.id:
+            key = unicode(self.id).lower()
+        else:
+            key = " "
+	if self.fields:
+	    if "name" in self.fields:
+		key = unicode(self.fields["name"]).lower()+" "+key
+        return key
+
     def name(self,configuration):
-        return configuration.barbaraConfig.braceTitle
+        return configuration.barbaraConfig.braceTitle if not self.id else self.id
 
     def refreshed(self,configuration):
         if configuration.barbaraConfig.applicationRole == u'b':
@@ -332,8 +342,6 @@ class ConfigurationObject(object):
         self.fields["user"] = anUser.id
         allObjects = configuration.findAllFromObject(self)
         if allObjects.local:
-            print allObjects.filename
-            print allObjects.fieldnames
             with open(baseDir+allObjects.filename,"a") as csvfile:
                 writer = unicodecsv.DictWriter(csvfile, delimiter = '\t', fieldnames=allObjects.fieldnames, encoding="utf-8")
                 writer.writerow(self.fields)
@@ -451,7 +459,7 @@ class AllObjects(object):
             currObject = self.createObject(key,row)
         return currObject
         
-    def elements_refreshed(self):
+    def elements_refreshed(self, onlyActive = False):
         nowTime = datetime.datetime.now()
         if not self.local and nowTime > self.lastReq:
             response = requests.get(self.config.barbaraConfig.applicationURL+u'/'+self.ids+u'/list')
@@ -469,7 +477,10 @@ class AllObjects(object):
                 traceback.print_exc()
             else:
                 print "Elements refresh HTTP error="+unicode(response.status_code)
-        return self.elements
+	if onlyActive:
+            return [x for x in self.elements if self.elements[x].isActive()]
+        else:
+            return self.elements
 
     def refresh(self,id):
         obj = self.elements[id]
@@ -867,8 +878,8 @@ class User(ConfigurationObject):
         self.fields[u'access'] = u'n'
 
     def isActive(self): # mode = C=consommation,B=bracelet,A=C+B, G=Config, N=None
-        acc = self.access()
-        return acc != 'n'
+        acc = self.access()+" "
+        return acc[0].lower() != 'n'
 
 class Products(ConfigurationObject):
 
@@ -1063,12 +1074,12 @@ class SaveConfigurationObject(app.page):
         try:
             fieldsReceived = jsonpickle.decode(web.data())
             currObject = self.allObjects.assignObject(objectId,fieldsReceived)
-            if currObject.__class__.__name__ in ["User","Products"]:
-                allObjects = c.findAllFromObject(currObject)
+            allObjects = c.findAllFromObject(currObject)
+	    if (allObjects == c.AllUsers) or (allObjects == c.AllProducts):
                 if allObjects.local:
                     with open(baseDir+config.allObjects.filename,"a") as csvfile:
                         writer = unicodecsv.DictWriter(csvfile, delimiter = '\t', fieldnames=config.allObjects.fieldnames, encoding="utf-8")
-                        writer.writerow(self.fields)
+                        writer.writerow(currObject.fields)
         except:
             traceback.print_exc()
         return fieldsReceived
