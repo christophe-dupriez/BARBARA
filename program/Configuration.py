@@ -1079,8 +1079,8 @@ class SaveConfigurationObject(app.page):
             allObjects = c.findAllFromObject(currObject)
 	    if (allObjects == c.AllUsers) or (allObjects == c.AllProducts):
                 if allObjects.local:
-                    with open(baseDir+c.allObjects.filename,"a") as csvfile:
-                        writer = unicodecsv.DictWriter(csvfile, delimiter = '\t', fieldnames=config.allObjects.fieldnames, encoding="utf-8")
+                    with open(baseDir+allObjects.filename,"a") as csvfile:
+                        writer = unicodecsv.DictWriter(csvfile, delimiter = '\t', fieldnames=allObjects.fieldnames, encoding="utf-8")
                         writer.writerow(currObject.fields)
         except:
             traceback.print_exc()
