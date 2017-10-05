@@ -1172,7 +1172,7 @@ ticket_barcode=[1000000012019,1000000012026,1000000012033,1000000012040,10000000
 liste_barcode=[1000000012019,1000000012026,1000000012033,1000000012040,1000000012057,1000000012064,1000000012071,1000000012088,1000000012095]
 
 fonction_vente_bracelets=[u"Nouveau Bracelet",u"PAYÉ CASH", u"Rembourser CASH", u"Paiement CB",u"ANNULER"]
-fonction_vente_bracelets_barcode=[int(CB_Arbitraire),int(CB_Vente_Bracelets),int(CB_Cash),int(CB_Modifier),int(CB_Carte),int(CB_Vente_Bracelets)]
+fonction_vente_bracelets_barcode=[int(CB_Arbitraire),int(CB_Cash),int(CB_Modifier),int(CB_Carte),int(CB_Vente_Bracelets)]
 
 fonction_vente_produits=[u"Retirer Consom.s",u"Ajouter Consom.s",u"ANNULER"]
 fonction_vente_produits_barcode=[int(CB_Modifier),int(CB_Carte),int(CB_Vente_Produits)]
@@ -1234,7 +1234,7 @@ def choiceTicket():
 		destroy_frame()
 		contexte_unique.listeGauche = 2
 		contexte_unique.listeGaucheNow = True
-		contexte_unique.tk_facture()
+		ecran_facture(contexte_unique)
 	elif contexte_unique.mode in [CB_Stock, CB_Scanners, CB_Collabs]:
 	        contexte_unique.TicketButton.config(relief=Tkinter.RAISED)
 		destroy_frame()
@@ -1758,9 +1758,9 @@ class Contexte (): #threading.Thread
         return keys
 
     def syncListeKey(self,elements):
-	keys = sorted(elements)
+	basket = sorted(elements,key=lambda product: product.sort())
         nbElem = len(elements)
-	print unicode(nbElem)+u": ["+",".join(k for k in keys)+"]"
+	print unicode(nbElem)+u": ["+",".join(product.id for product in basket)+"]"
         if self.debut >= nbElem :
             self.debut = 0
         elif self.debut < 0 :
@@ -1768,11 +1768,11 @@ class Contexte (): #threading.Thread
         self.fin  = self.debut +  TAILLE_ECRAN
         if self.fin > nbElem :
             self.fin = nbElem
-        self.currListe = keys
-        return keys
+        self.currListe = basket
+        return basket
 
-    def syncChoix(self,index,all):
-        keys = self.syncListe(all)
+    def syncChoix(self,index,all,onlyActive = False):
+        keys = self.syncListe(all,onlyActive)
         index = index + self.debut
         if index >= self.fin:
             return None
@@ -1917,6 +1917,8 @@ class Contexte (): #threading.Thread
 
     def tk_vente_produits(self) :
             if self.produit == None :
+                return
+            if not self.produit in self.panier:
                 return
 
             self.ensure_tkdisplay()
@@ -2147,13 +2149,14 @@ class Contexte (): #threading.Thread
             t_droits = self.canevas.create_text(self.pos_X, self.pos_Y, text = self.utilisateur.getAccessCode(), fill = color_debit,font = size30)
 
     def tk_facture(self) :
+            ancien = self.panier != self.prev_panier
             self.ensure_tkdisplay()
 
             theGrid = Tkinter.Canvas(self.canevas, width = frame_width-2, height = frame_height-62, bg=color_canevas, bd=1)
             theGrid.place(anchor=Tkinter.N, x=frame_width/2, y = 45)
 
             if brace_type==0:
-	        name_column = Tkinter.Label(theGrid,text = "TICKET", fg = color_header, bg = color_canevas,font = size22)
+	        name_column = Tkinter.Label(theGrid,text = "FERMÉ" if ancien else "TICKET", fg = color_header, bg = color_canevas,font = size22)
 		name_column.grid(row = 0, column = 0,columnspan = 5, pady=4)
 		name_column = Tkinter.Label(theGrid,text = "Num.", fg = color_header, bg = color_canevas,font = size20)
 		name_column.grid(row = 1, column = 0, pady=2,padx=1)
@@ -2169,7 +2172,7 @@ class Contexte (): #threading.Thread
                 ligne = 1
             
             elif brace_type == 1:
-		name_column = Tkinter.Label(theGrid,text = "TICKET", fg = color_header, bg = color_canevas,font = size20)
+		name_column = Tkinter.Label(theGrid,text = "FERMÉ" if ancien else "TICKET", fg = color_header, bg = color_canevas,font = size20)
 		name_column.grid(row = 0, column = 0, pady=1,padx=1)
 		name_column = Tkinter.Label(theGrid,text = "Qt", fg = color_header,bg = color_canevas,font = size20)
 		name_column.grid(row = 0, column = 1, pady=1,padx=1)
@@ -2183,9 +2186,8 @@ class Contexte (): #threading.Thread
             bouteilles = 0
 
                 
-            print "Votre Facture : "
             index = self.debut
-            for element in self.prev_panier.keys() [self.debut : self.debut+TAILLE_ECRAN]:
+            for element in self.currListe[self.debut : self.debut+TAILLE_ECRAN]:
                     ligne += 1
                     #récupération des infos à partir de la base de données
 
@@ -2408,9 +2410,9 @@ class Contexte (): #threading.Thread
         if self.qty_choisie and self.qty_choisie >= 0:
             self.produit.setCents(self.qty_choisie)
         if deny:
-            self.produit.fields["deny"] = ""
+            self.produit.setInactive()
         else:
-            self.produit.fields["deny"] = "1"
+            self.produit.setActive()
         self.produit.save(c,self.user)
         return True
 
@@ -2863,8 +2865,7 @@ class Contexte (): #threading.Thread
                                 self.modifier = False
                             elif self.mode == CB_Stock:
                                 if self.produit:
-                                    self.produit.setActive()
-                                    if self.sauver_produit(True):
+                                    if self.sauver_produit(False):
                                         ecran_produit(self)
                                     else:
                                         ecran_message(self,0,u"!Problème de réseau?",u"Activer Produit",u"annulé")
@@ -2895,7 +2896,7 @@ class Contexte (): #threading.Thread
                                     ecran_scanner(self)
                             elif self.mode == CB_Vente_Produits:
                                 if contexte_unique.menu == contexte_unique.ListeButton:
-                                    self.produit = self.syncChoix(aChoice,c.AllProducts)
+                                    self.produit = self.syncChoix(aChoice,c.AllProducts,True)
                                     if self.produit:
                                         if self.modifier:
                                             self.retirer_produit()                    
@@ -2903,7 +2904,7 @@ class Contexte (): #threading.Thread
                                             self.ajouter_produit()
                                         ecran_vente_produits(self)
                                 elif contexte_unique.menu == contexte_unique.TicketButton:
-                                    self.produit = self.syncChoixTicket(aChoice,self.prev_panier)
+                                    self.produit = self.syncChoixTicket(aChoice,self.panier)
                                     if self.produit:
                                         if self.modifier:
                                             self.retirer_produit()
