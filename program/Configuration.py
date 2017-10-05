@@ -338,6 +338,8 @@ class ConfigurationObject(object):
             return self
 
     def save(self,configuration,anUser=""):
+        global baseDir
+
         self.fields["time"] = unicode(datetime.datetime.now())
         self.fields["user"] = anUser.id
         allObjects = configuration.findAllFromObject(self)
@@ -1077,7 +1079,7 @@ class SaveConfigurationObject(app.page):
             allObjects = c.findAllFromObject(currObject)
 	    if (allObjects == c.AllUsers) or (allObjects == c.AllProducts):
                 if allObjects.local:
-                    with open(baseDir+config.allObjects.filename,"a") as csvfile:
+                    with open(baseDir+c.allObjects.filename,"a") as csvfile:
                         writer = unicodecsv.DictWriter(csvfile, delimiter = '\t', fieldnames=config.allObjects.fieldnames, encoding="utf-8")
                         writer.writerow(currObject.fields)
         except:
